@@ -6,14 +6,31 @@ import pandas as pd
 import shutil
 
 
+def df_to_csv(df, data_dir, xml_path):
+    csv_path = os.path.join(
+        data_dir, os.path.basename(xml_path).replace(".xml", ".csv")
+    )
+    df.to_csv(csv_path, index=False, encoding="utf-8")
+    print("Saved:", csv_path)
+
+    # Move XML file to "converted" directory
+    target_dir = os.path.join(data_dir, "xml", "converted")
+    os.makedirs(target_dir, exist_ok=True)
+    target_path = os.path.join(target_dir, os.path.basename(xml_path))
+
+    shutil.move(xml_path, target_path)
+    print(f"Moved {xml_path} to {target_path}.")
+
+    return
+
+
 def xml_to_csv(config_path):
     with open(config_path) as file:
         config = json.load(file)
 
     data_dir = os.path.join(config["data_dir"], "eqvol", "VXSE51")
-    xml_dir = os.path.join(data_dir, "xml")
 
-    for xml_path in glob.glob(os.path.join(xml_dir, "*.xml")):
+    for xml_path in glob.glob(os.path.join(data_dir, "xml", "*.xml")):
         print(xml_path)
 
         with open(xml_path, "r", encoding="utf-8") as file:
@@ -60,19 +77,7 @@ def xml_to_csv(config_path):
                 ]
 
         # Save DataFrame to CSV
-        csv_path = os.path.join(
-            data_dir, os.path.basename(xml_path).replace(".xml", ".csv")
-        )
-        df.to_csv(csv_path, index=False, encoding="utf-8")
-        print("Saved:", csv_path)
-
-        # Move XML file to "converted" directory
-        target_dir = os.path.join(xml_dir, "converted")
-        os.makedirs(target_dir, exist_ok=True)
-        target_path = os.path.join(target_dir, os.path.basename(xml_path))
-
-        shutil.move(xml_path, target_path)
-        print(f"Moved {xml_path} to {target_path}.")
+        df_to_csv(df, data_dir, xml_path)
 
     return
 
