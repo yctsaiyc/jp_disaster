@@ -1,0 +1,15 @@
+{
+    "data_dir": ".",
+    "names": {
+        "定時情報（高頻度フィード）": "regular",
+        "随時情報（高頻度フィード）": "extra",
+        "地震火山情報（高頻度フィード）": "eqvol",
+        "その他情報（高頻度フィード）": "other"
+    },
+    "feed_urls": {
+        "regular": "https://www.data.jma.go.jp/developer/xml/feed/regular.xml",
+        "extra": "https://www.data.jma.go.jp/developer/xml/feed/extra.xml",
+        "eqvol": "https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml",
+        "other": "https://www.data.jma.go.jp/developer/xml/feed/other.xml"
+    }
+}
