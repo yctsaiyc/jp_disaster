@@ -80,12 +80,12 @@ def save_data_xml(urls):
                 print("Saved:", xml_path)
 
 
-def main():
-    config = load_config("egov.json")
+def main(config_path):
+    config = load_config(config_path)
     save_feed_xml()
     urls = get_data_urls()
     save_data_xml(urls)
 
 
 if __name__ == "__main__":
-    main()
+    main("disaster.json")
