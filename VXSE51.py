@@ -31,10 +31,24 @@ class ETL_jp_disaster:
     
         shutil.move(xml_path, target_path)
         print(f"Moved {xml_path} to {target_path}")
+
+
+    def xml_to_df(self, xml_path, soup):
+        raise NotImplementedError("Subclasses must implement this method")
+
+
+    def xml_to_csv(self):
+        for xml_path in glob.glob(os.path.join(self.data_dir, "xml", "*.xml")):
+            print("Processing:", xml_path)
     
-        return
+            with open(xml_path, "r", encoding="utf-8") as file:
+                xml_data = file.read()
+    
+            soup = BeautifulSoup(xml_data, "xml")
+            self.xml_to_df(xml_path, soup)
 
 
+class ETL_VXSE51(ETL_jp_disaster):
     def xml_to_df(self, xml_path, soup):
         df = pd.DataFrame(columns=self.columns)
 
@@ -70,19 +84,6 @@ class ETL_jp_disaster:
         self.df_to_csv(df, xml_path)
 
 
-    def xml_to_csv(self):
-        for xml_path in glob.glob(os.path.join(self.data_dir, "xml", "*.xml")):
-            print("Processing:", xml_path)
-    
-            with open(xml_path, "r", encoding="utf-8") as file:
-                xml_data = file.read()
-    
-            soup = BeautifulSoup(xml_data, "xml")
-            self.xml_to_df(xml_path, soup)
-    
-        return
-
-
 if __name__ == "__main__":
-    etl_vxse51 = ETL_jp_disaster("disaster.json", "eqvol", "VXSE51")
+    etl_vxse51 = ETL_VXSE51("disaster.json", "eqvol", "VXSE51")
     etl_vxse51.xml_to_csv()
