@@ -11,5 +11,17 @@
         "extra": "https://www.data.jma.go.jp/developer/xml/feed/extra.xml",
         "eqvol": "https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml",
         "other": "https://www.data.jma.go.jp/developer/xml/feed/other.xml"
-    }
+    },
+    "columns": {
+        "eqvol": {
+            "VXSE51": [
+                "発表時刻",
+                "基点時刻",
+                "都道府県",
+                "最大震度（都道府県）",
+                "地域",
+                "最大震度（地域）"
+            ]
+        }
+     }
 }
