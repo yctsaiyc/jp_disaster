@@ -1,6 +1,4 @@
 from disaster import ETL_jp_disaster
-import json
-import os
 from bs4 import BeautifulSoup
 import pandas as pd
 
@@ -13,6 +11,7 @@ class ETL_VXSE51(ETL_jp_disaster):
         ReportDateTime = (
             soup.find("ReportDateTime").text.replace("T", " ").replace("+09:00", "")
         )
+
         TargetDateTime = (
             soup.find("TargetDateTime").text.replace("T", " ").replace("+09:00", "")
         )
@@ -41,6 +40,10 @@ class ETL_VXSE51(ETL_jp_disaster):
         self.df_to_csv(df, xml_path)
 
 
-if __name__ == "__main__":
-    etl_vxse51 = ETL_VXSE51("disaster.json", "eqvol", "VXSE51")
+def VXSE51(config_path):
+    etl_vxse51 = ETL_VXSE51(config_path, "eqvol", "VXSE51")
     etl_vxse51.xml_to_csv()
+
+
+if __name__ == "__main__":
+    VXSE51("disaster.json")

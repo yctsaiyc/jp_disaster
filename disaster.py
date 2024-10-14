@@ -99,36 +99,38 @@ class ETL_jp_disaster:
         self.columns = self.config["columns"][feed][code]
         self.data_dir = os.path.join(self.config["data_dir"], self.feed, self.code)
 
-
     def df_to_csv(self, df, xml_path):
         csv_path = os.path.join(
             self.data_dir, os.path.basename(xml_path).replace(".xml", ".csv")
         )
         df.to_csv(csv_path, index=False, encoding="utf-8")
         print("Saved:", csv_path)
-    
+
         # Move XML file to "converted" directory
         target_dir = os.path.join(self.data_dir, "xml", "converted")
         os.makedirs(target_dir, exist_ok=True)
         target_path = os.path.join(target_dir, os.path.basename(xml_path))
-    
+
         shutil.move(xml_path, target_path)
         print(f"Moved {xml_path} to {target_path}")
-
 
     def xml_to_df(self, xml_path, soup):
         raise NotImplementedError("Subclasses must implement this method")
 
-
     def xml_to_csv(self):
         for xml_path in glob.glob(os.path.join(self.data_dir, "xml", "*.xml")):
             print("Processing:", xml_path)
-    
+
             with open(xml_path, "r", encoding="utf-8") as file:
                 xml_data = file.read()
-    
+
             soup = BeautifulSoup(xml_data, "xml")
             self.xml_to_df(xml_path, soup)
+
+    def full_width_to_float(self, text):
+        return float(
+            text.translate(str.maketrans("０１２３４５６７８９．", "0123456789."))
+        )
 
 
 if __name__ == "__main__":
