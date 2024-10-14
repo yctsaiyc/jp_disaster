@@ -35,6 +35,41 @@ class ETL_jp_disaster:
         return
 
 
+    def xml_to_df(self, xml_path, soup):
+        df = pd.DataFrame(columns=self.columns)
+
+        # Find DateTime
+        ReportDateTime = (
+            soup.find("ReportDateTime").text.replace("T", " ").replace("+09:00", "")
+        )
+        TargetDateTime = (
+            soup.find("TargetDateTime").text.replace("T", " ").replace("+09:00", "")
+        )
+
+        # Find all Pref nodes
+        for pref in soup.find_all("Pref"):
+            pref_name = pref.find("Name").text
+            pref_max_int = pref.find("MaxInt").text
+
+            # Find all Area nodes
+            for area in pref.find_all("Area"):
+                area_name = area.find("Name").text
+                area_max_int = area.find("MaxInt").text
+
+                # Add row to DataFrame
+                df.loc[len(df)] = [
+                    ReportDateTime,
+                    TargetDateTime,
+                    pref_name,
+                    pref_max_int,
+                    area_name,
+                    area_max_int,
+                ]
+
+        # Save DataFrame to CSV
+        self.df_to_csv(df, xml_path)
+
+
     def xml_to_csv(self):
         for xml_path in glob.glob(os.path.join(self.data_dir, "xml", "*.xml")):
             print("Processing:", xml_path)
@@ -43,39 +78,7 @@ class ETL_jp_disaster:
                 xml_data = file.read()
     
             soup = BeautifulSoup(xml_data, "xml")
-    
-            df = pd.DataFrame(columns=self.columns)
-    
-            # Find DateTime
-            ReportDateTime = (
-                soup.find("ReportDateTime").text.replace("T", " ").replace("+09:00", "")
-            )
-            TargetDateTime = (
-                soup.find("TargetDateTime").text.replace("T", " ").replace("+09:00", "")
-            )
-    
-            # Find all Pref nodes
-            for pref in soup.find_all("Pref"):
-                pref_name = pref.find("Name").text
-                pref_max_int = pref.find("MaxInt").text
-    
-                # Find all Area nodes
-                for area in pref.find_all("Area"):
-                    area_name = area.find("Name").text
-                    area_max_int = area.find("MaxInt").text
-    
-                    # Add row to DataFrame
-                    df.loc[len(df)] = [
-                        ReportDateTime,
-                        TargetDateTime,
-                        pref_name,
-                        pref_max_int,
-                        area_name,
-                        area_max_int,
-                    ]
-    
-            # Save DataFrame to CSV
-            self.df_to_csv(df, xml_path)
+            self.xml_to_df(xml_path, soup)
     
         return
 
