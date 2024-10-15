@@ -28,24 +28,48 @@ class ETL_VFVO53(ETL_jp_disaster):
             longitude = self.dms_to_decimal(float(coordinate[2]))
             height = float(coordinate[3])
 
-            df.loc[len(df)] = [
-                kind_1_name,
-                area_1_name,
-                latitude,
-                longitude,
-                height,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-            ]
+            df1 = pd.DataFrame(
+                {
+                    "Kind": [kind_1_name],
+                    "Area": [area_1_name],
+                    "Latitude": [latitude],
+                    "Longitude": [longitude],
+                    "Height": [height],
+                }
+            )
 
-            print(df)
+            # 降灰予報（対象市町村等）
+            df2 = pd.DataFrame(columns=["Kind", "Area"])
+
+            for item in volcano_info_2.find_all("Item"):
+                kind_2_name = item.find("Kind").find("Name").text
+
+                area_2s = item.find_all("Area")
+                area_2_names = [area_2.find("Name").text for area_2 in area_2s]
+
+                kind_2_names = [kind_2_name] * len(area_2_names)
+
+                df2 = pd.concat(
+                    [
+                        df2,
+                        pd.DataFrame(
+                            {
+                                "Kind": kind_2_names,
+                                "Area": area_2_names,
+                            }
+                        ),
+                    ],
+                    ignore_index=True,
+                )
+
+            print(
+                pd.concat(
+                    [pd.concat([df1] * len(df2), ignore_index=True), df2],
+                    axis=1,
+                    ignore_index=True,
+                )
+            )
+
             exit()
 
             # Save DataFrame to CSV
