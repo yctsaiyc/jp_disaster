@@ -132,6 +132,11 @@ class ETL_jp_disaster:
             text.translate(str.maketrans("０１２３４５６７８９．", "0123456789."))
         )
 
+    def dms_to_decimal(self, dms):  # e.g. 3624.38
+        degree = int(dms // 100)  # Extract the degree part. e.g. 36
+        minutes = dms % 100  # Extract the minutes part. e.g. 24.38
+        return degree + (minutes / 60.0)  # e.g. 36 + 24.38 / 60
+
 
 if __name__ == "__main__":
     main("disaster.json")
