@@ -127,6 +127,9 @@ class ETL_jp_disaster:
             soup = BeautifulSoup(xml_data, "xml")
             self.xml_to_df(xml_path, soup)
 
+    def format_datetime(self, text):
+        return text.replace("T", " ").replace("+09:00", "")
+
     def full_width_to_float(self, text):
         return float(
             text.translate(str.maketrans("０１２３４５６７８９．", "0123456789."))

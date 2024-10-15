@@ -1,14 +1,37 @@
 from disaster import ETL_jp_disaster
 from bs4 import BeautifulSoup
 import pandas as pd
+import os
+import shutil
 
 ### from airflow.exceptions import AirflowFailException
 
 
 class ETL_VFVO53(ETL_jp_disaster):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.soup = None
+
+    def df_to_csv(self, df, xml_path, subfolder):
+        subfolder = os.path.join(self.data_dir, subfolder)
+        os.makedirs(subfolder, exist_ok=True)
+        csv_path = os.path.join(
+            subfolder, os.path.basename(xml_path).replace(".xml", ".csv")
+        )
+        df.to_csv(csv_path, index=False, encoding="utf-8")
+        print("Saved:", csv_path)
+
+    def move_xml(self, xml_path):
+        target_dir = os.path.join(self.data_dir, "xml", "converted")
+        os.makedirs(target_dir, exist_ok=True)
+        target_path = os.path.join(target_dir, os.path.basename(xml_path))
+
+        shutil.move(xml_path, target_path)
+        print(f"Moved {xml_path} to {target_path}")
+
     # 降灰予報（対象火山）
-    def volcano_info_1_to_df(self, soup, rows_count=1):
-        volcano_info = soup.find("VolcanoInfo", {"type": "降灰予報（対象火山）"})
+    def volcano_info_1_to_df(self, rows_count=1):
+        volcano_info = self.soup.find("VolcanoInfo", {"type": "降灰予報（対象火山）"})
         kind_name = volcano_info.find("Kind").find("Name").text
 
         area = volcano_info.find("Area")
@@ -33,8 +56,10 @@ class ETL_VFVO53(ETL_jp_disaster):
         return df
 
     # 降灰予報（対象市町村等）
-    def volcano_info_2_to_df(self, soup):
-        volcano_info = soup.find("VolcanoInfo", {"type": "降灰予報（対象市町村等）"})
+    def volcano_info_2_to_df(self):
+        volcano_info = self.soup.find(
+            "VolcanoInfo", {"type": "降灰予報（対象市町村等）"}
+        )
 
         df = pd.DataFrame(columns=["Kind", "Area"])
 
@@ -59,29 +84,71 @@ class ETL_VFVO53(ETL_jp_disaster):
 
         return df
 
+    # 降灰予報（定時）
+    def ash_info_to_df(self, ash_info):
+        df = pd.DataFrame()
+
+        for item in ash_info.find_all("Item"):
+            areas = item.find_all("Area")
+            area_names = [area.find("Name").text for area in areas]
+
+            if df.empty:
+                df = pd.DataFrame({"area_name": area_names})
+            else:
+                df = pd.concat(
+                    [df, pd.DataFrame({"area_name": area_names})], ignore_index=True
+                )
+
+            df["start_time"] = self.format_datetime(ash_info.find("StartTime").text)
+            df["end_time"] = self.format_datetime(ash_info.find("EndTime").text)
+
+            kind = item.find("Kind")
+            df["kind_name"] = kind.find("Name").text
+
+            property_ = kind.find("Property")
+            df["polygon"] = property_.find("jmx_eb:Polygon").text
+            df["plume_direction"] = property_.find("jmx_eb:PlumeDirection").text
+            df["distance"] = property_.find("Distance").text
+
+            col = df.pop("area_name")
+            df["area_name"] = col
+
+        return df
+
+    # 降灰予報（定時）
+    def ash_infos_to_df(self):
+        ash_infos = self.soup.find("AshInfos", {"type": "降灰予報（定時）"})
+
+        df = pd.DataFrame()
+
+        for ash_info in ash_infos.find_all("AshInfo"):
+            if df.empty:
+                df = self.ash_info_to_df(ash_info)
+
+            else:
+                df = pd.concat([df, self.ash_info_to_df(ash_info)], ignore_index=True)
+
+        return df
+
     def xml_to_df(self, xml_path, soup):
         try:
-            df = pd.DataFrame(columns=self.columns)
+            self.soup = soup
 
-            # 降灰予報（対象市町村等）
-            df_volcano_info_2 = self.volcano_info_2_to_df(soup)
+            # df = pd.DataFrame(columns=self.columns)
 
-            # 降灰予報（対象火山）
-            df_volcano_info_1 = self.volcano_info_1_to_df(
-                soup, rows_count=len(df_volcano_info_2)
-            )
+            # # 降灰予報（対象火山）
+            # df_volcano_info_1 = self.volcano_info_1_to_df()
+            # self.df_to_csv(df_volcano_info_1, xml_path, subfolder="volcano_info_1")
 
-            df = pd.concat(
-                [df_volcano_info_1, df_volcano_info_2], axis=1, ignore_index=True
-            )
-            print(df)
-            exit()
+            # # 降灰予報（対象市町村等）
+            # df_volcano_info_2 = self.volcano_info_2_to_df()
+            # self.df_to_csv(df_volcano_info_2, xml_path, subfolder="volcano_info_2")
 
             # 降灰予報（定時）
-            ash_infos = soup.find_all("AshInfo", {"type": "降灰予報（定時）"})
-
-            # Save DataFrame to CSV
-            self.df_to_csv(df, xml_path)
+            df = self.ash_infos_to_df()
+            self.df_to_csv(df, xml_path, subfolder="ash_infos")
+            self.move_xml(xml_path)
+            exit()
 
         except Exception as e:
             raise  ### AirflowFailException(e)
