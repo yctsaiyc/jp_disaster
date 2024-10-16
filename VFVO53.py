@@ -96,27 +96,32 @@ class ETL_VFVO53(ETL_jp_disaster):
         for item in ash_info.find_all("Item"):
             areas = item.find_all("Area")
             area_names = [area.find("Name").text for area in areas]
-
-            if df.empty:
-                df = pd.DataFrame({"area_name": area_names})
-            else:
-                df = pd.concat(
-                    [df, pd.DataFrame({"area_name": area_names})], ignore_index=True
-                )
-
-            df["start_time"] = self.format_datetime(ash_info.find("StartTime").text)
-            df["end_time"] = self.format_datetime(ash_info.find("EndTime").text)
+            length = len(area_names)
 
             kind = item.find("Kind")
-            df["kind_name"] = kind.find("Name").text
+            kind_names = [kind.find("Name").text] * length
 
             property_ = kind.find("Property")
-            df["polygon"] = property_.find("jmx_eb:Polygon").text
-            df["plume_direction"] = property_.find("jmx_eb:PlumeDirection").text
-            df["distance"] = property_.find("Distance").text
 
-            col = df.pop("area_name")
-            df["area_name"] = col
+            # ***多角形可能有多個***
+            polygons = [property_.find("jmx_eb:Polygon").text] * length
+            plume_directions = [property_.find("jmx_eb:PlumeDirection").text] * length
+            distances = [property_.find("Distance").text] * length
+
+            new_df = pd.DataFrame(
+                {
+                    "kind_name": kind_names,
+                    "area_name": area_names,
+                    "polygon": polygons,
+                    "plume_direction": plume_directions,
+                    "distance": distances,
+                }
+            )
+
+            df = pd.concat([new_df, df], ignore_index=True) if not df.empty else new_df
+
+        df.insert(0, "start_time", self.format_datetime(ash_info.find("StartTime").text))
+        df.insert(1, "end_time", self.format_datetime(ash_info.find("EndTime").text))
 
         return df
 
@@ -164,6 +169,8 @@ class ETL_VFVO53(ETL_jp_disaster):
                 ignore_index=True,
                 axis=1,
             )
+
+            df.columns = self.columns
 
             self.df_to_csv(df, xml_path)
 
