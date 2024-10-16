@@ -12,9 +12,14 @@ class ETL_VFVO53(ETL_jp_disaster):
         super().__init__(*args, **kwargs)
         self.soup = None
 
-    def df_to_csv(self, df, xml_path, subfolder):
-        subfolder = os.path.join(self.data_dir, subfolder)
-        os.makedirs(subfolder, exist_ok=True)
+    def df_to_csv(self, df, xml_path, subfolder=None):
+        if subfolder is None:
+            subfolder = self.data_dir
+
+        else:
+            subfolder = os.path.join(self.data_dir, subfolder)
+            os.makedirs(subfolder, exist_ok=True)
+
         csv_path = os.path.join(
             subfolder, os.path.basename(xml_path).replace(".xml", ".csv")
         )
@@ -136,8 +141,8 @@ class ETL_VFVO53(ETL_jp_disaster):
 
             # df = pd.DataFrame(columns=self.columns)
 
-            # # 降灰予報（対象火山）
-            # df_volcano_info_1 = self.volcano_info_1_to_df()
+            # 降灰予報（対象火山）
+            df_volcano_info_1 = self.volcano_info_1_to_df()
             # self.df_to_csv(df_volcano_info_1, xml_path, subfolder="volcano_info_1")
 
             # # 降灰予報（対象市町村等）
@@ -145,8 +150,24 @@ class ETL_VFVO53(ETL_jp_disaster):
             # self.df_to_csv(df_volcano_info_2, xml_path, subfolder="volcano_info_2")
 
             # 降灰予報（定時）
-            df = self.ash_infos_to_df()
-            self.df_to_csv(df, xml_path, subfolder="ash_infos")
+            df_ash_infos = self.ash_infos_to_df()
+            # self.df_to_csv(df, xml_path, subfolder="ash_infos")
+
+            # 合併降灰予報（対象火山）& 降灰予報（定時）
+            df_volcano_info_repeated = pd.concat(
+                [df_volcano_info_1] * len(df_ash_infos),
+                ignore_index=True,
+            )
+
+            df = pd.concat(
+                [df_volcano_info_repeated, df_ash_infos],
+                ignore_index=True,
+                axis=1,
+            )
+
+            self.df_to_csv(df, xml_path)
+
+            # 移到"converted"
             self.move_xml(xml_path)
             exit()
 
