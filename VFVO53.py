@@ -120,7 +120,9 @@ class ETL_VFVO53(ETL_jp_disaster):
 
             df = pd.concat([new_df, df], ignore_index=True) if not df.empty else new_df
 
-        df.insert(0, "start_time", self.format_datetime(ash_info.find("StartTime").text))
+        df.insert(
+            0, "start_time", self.format_datetime(ash_info.find("StartTime").text)
+        )
         df.insert(1, "end_time", self.format_datetime(ash_info.find("EndTime").text))
 
         return df
@@ -168,6 +170,16 @@ class ETL_VFVO53(ETL_jp_disaster):
                 [df_volcano_info_repeated, df_ash_infos],
                 ignore_index=True,
                 axis=1,
+            )
+
+            # add ReportDateTime
+            df.insert(
+                0,
+                "DateTime",
+                soup.find("Head")
+                .find("ReportDateTime")
+                .text.replace("T", " ")
+                .replace("+09:00", ""),
             )
 
             df.columns = self.columns
