@@ -188,7 +188,6 @@ class ETL_VFVO53(ETL_jp_disaster):
 
             # 移到"converted"
             self.move_xml(xml_path)
-            exit()
 
         except Exception as e:
             raise  ### AirflowFailException(e)
