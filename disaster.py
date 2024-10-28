@@ -67,7 +67,9 @@ def save_data_xml(urls):
             os.makedirs(dir_path, exist_ok=True)
             xml_path = os.path.join(dir_path, xml_name)
 
-            if os.path.exists(xml_path):
+            if os.path.exists(xml_path) or os.path.exists(
+                os.path.join(xml_path, "converted")
+            ):
                 print("Exists:", xml_path)
                 break
 
