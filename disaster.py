@@ -130,7 +130,8 @@ class ETL_jp_disaster:
                 xml_data = file.read()
 
             soup = BeautifulSoup(xml_data, "xml")
-            self.xml_to_df(xml_path, soup)
+            df = self.xml_to_df(xml_path, soup)
+            self.df_to_csv(df, xml_path)
 
     def format_datetime(self, text):
         return text.replace("T", " ").replace("+09:00", "")

@@ -49,8 +49,7 @@ class ETL_VXSE52(ETL_jp_disaster):
             magnitude,
         ]
 
-        # Save DataFrame to CSV
-        self.df_to_csv(df, xml_path)
+        return df
 
 
 def VXSE52(config_path):

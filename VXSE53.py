@@ -82,8 +82,7 @@ class ETL_VXSE53(ETL_jp_disaster):
                             station_int,
                         ]
 
-        # Save DataFrame to CSV
-        self.df_to_csv(df, xml_path)
+        return df
 
 
 def VXSE53(config_path):

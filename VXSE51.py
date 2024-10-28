@@ -36,8 +36,7 @@ class ETL_VXSE51(ETL_jp_disaster):
                     area_max_int,
                 ]
 
-        # Save DataFrame to CSV
-        self.df_to_csv(df, xml_path)
+        return df
 
 
 def VXSE51(config_path):
