@@ -78,8 +78,11 @@ def save_data_xml(urls):
                 response.encoding = "utf-8"
                 xml = response.text
 
+                soup = BeautifulSoup(xml, "xml")
+                pretty_xml = soup.prettify()
+
                 with open(xml_path, "w") as file:
-                    file.write(xml)
+                    file.write(pretty_xml)
 
                 print("Saved:", xml_path)
 
