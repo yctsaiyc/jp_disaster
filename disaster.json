@@ -13,6 +13,18 @@
         "other": "https://www.data.jma.go.jp/developer/xml/feed/other.xml"
     },
     "columns": {
+        "regular": {
+            "VPRN50": [
+                "基点時刻",
+                "対象地域のコードの種別",
+                "対象地域の名称",
+                "府県予報区名",
+                "大雨危険度",
+                "土砂災害危険度",
+                "浸水害危険度",
+                "洪水害危険度"
+            ]
+        },
         "eqvol": {
             "VXSE51": [
                 "発表時刻",
