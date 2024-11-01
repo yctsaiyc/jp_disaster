@@ -11,13 +11,8 @@ class ETL_VXSE51(ETL_jp_disaster):
             df = pd.DataFrame(columns=self.columns)
 
             # Find DateTime
-            ReportDateTime = (
-                soup.find("ReportDateTime").text.replace("T", " ").replace("+09:00", "")
-            )
-
-            TargetDateTime = (
-                soup.find("TargetDateTime").text.replace("T", " ").replace("+09:00", "")
-            )
+            ReportDateTime = self.format_datetime(soup.find("ReportDateTime").text)
+            TargetDateTime = self.format_datetime(soup.find("TargetDateTime").text)
 
             # Find all Pref nodes
             for pref in soup.find_all("Pref"):

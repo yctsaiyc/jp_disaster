@@ -11,13 +11,8 @@ class ETL_VXSE52(ETL_jp_disaster):
             df = pd.DataFrame(columns=self.columns)
 
             # Time
-            OriginTime = (
-                soup.find("OriginTime").text.replace("T", " ").replace("+09:00", "")
-            )
-
-            ArrivalTime = (
-                soup.find("ArrivalTime").text.replace("T", " ").replace("+09:00", "")
-            )
+            OriginTime = self.format_datetime(soup.find("OriginTime").text)
+            ArrivalTime = self.format_datetime(soup.find("ArrivalTime").text)
 
             # Hypocenter
             hypocenter = soup.find("Hypocenter")

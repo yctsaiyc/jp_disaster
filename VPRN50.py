@@ -18,10 +18,8 @@ class ETL_VPRN50(ETL_jp_disaster):
                 )
 
                 for meteorological_info in meteorological_info_s:
-                    date_time = (
-                        meteorological_info.find("DateTime")
-                        .text.replace("T", " ")
-                        .replace("+09:00", "")
+                    date_time = self.format_datetime(
+                        meteorological_info.find("DateTime").text
                     )
 
                     for item in meteorological_info.find_all("Item"):
