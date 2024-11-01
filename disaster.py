@@ -135,13 +135,16 @@ class ETL_jp_disaster:
         minutes = dms % 100  # Extract the minutes part. e.g. 24.38
         return degree + round(minutes / 60.0, 4)  # e.g. 36 + 24.38 / 60
 
-    def process_coordinate(self, coordinate):
-        # <Coordinate description="北緯３１度２６．３８分　東経１４０度０３．０３分　標高１３６ｍ">+3126.38+14003.03+136/</Coordinate>
-        # <Coordinate description="北緯２６度０７．６０分　東経１４１度０６．１０分　水深９５ｍ">+2607.60+14106.10-95/</Coordinate>
+    def process_coordinate(self, coordinate, format_="decimal"):
         coordinate = coordinate.replace("/", "").replace("-", "+-").split("+")
 
-        latitude = self.dms_to_decimal(float(coordinate[1]))
-        longitude = self.dms_to_decimal(float(coordinate[2]))
+        latitude = float(coordinate[1])
+        longitude = float(coordinate[2])
+
+        if format_ == "dms":
+            latitude = self.dms_to_decimal(latitude)
+            longitude = self.dms_to_decimal(longitude)
+
         height = int(coordinate[3])
 
         return latitude, longitude, height

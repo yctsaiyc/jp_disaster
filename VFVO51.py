@@ -39,7 +39,13 @@ class ETL_VFVO51(ETL_jp_disaster):
                     area_name = area.find("Name").text
 
                     # 2-1-4-1-3.Coordinate【対象火山の位置】(1 回)
-                    coordinate = self.process_coordinate(area.find("Coordinate").text)
+                    # <Coordinate description="北緯３１度２６．３８分　東経１４０度０３．０３分　標高１３６ｍ">
+                    # +3126.38+14003.03+136/</Coordinate>
+                    # <Coordinate description="北緯２６度０７．６０分　東経１４１度０６．１０分　水深９５ｍ">
+                    # +2607.60+14106.10-95/</Coordinate>
+                    coordinate = self.process_coordinate(
+                        area.find("Coordinate").text, format_="dms"
+                    )
 
                     latitude = coordinate[0]
                     longitude = coordinate[1]

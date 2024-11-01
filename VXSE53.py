@@ -17,22 +17,16 @@ class ETL_VXSE53(ETL_jp_disaster):
             # Hypocenter
             hypocenter = soup.find("Hypocenter")
             name = hypocenter.find("Name").text
-            coordinate = hypocenter.find("jmx_eb:Coordinate")["description"].split("　")
 
-            latitude = self.full_width_to_float(
-                coordinate[0].replace("北緯", "").replace("度", "")
+            coordinate = self.process_coordinate(
+                hypocenter.find("jmx_eb:Coordinate").text
             )
 
-            longitude = self.full_width_to_float(
-                coordinate[1].replace("東経", "").replace("度", "")
-            )
+            latitude = coordinate[0]
+            longitude = coordinate[1]
+            depth = int(-coordinate[2] / 1000)
 
-            depth = self.full_width_to_float(
-                coordinate[-1]
-                .replace("深さ", "")
-                .replace("ｋｍ", "")
-                .replace("ごく浅い", "0")
-            )
+            wkt = self.add_wkt(longitude, latitude)
 
             magnitude = soup.find("jmx_eb:Magnitude").text
 
@@ -65,8 +59,8 @@ class ETL_VXSE53(ETL_jp_disaster):
                                 OriginTime,
                                 ArrivalTime,
                                 name,
-                                latitude,
                                 longitude,
+                                latitude,
                                 depth,
                                 magnitude,
                                 max_int,
@@ -78,6 +72,7 @@ class ETL_VXSE53(ETL_jp_disaster):
                                 city_max_int,
                                 station_name,
                                 station_int,
+                                wkt,
                             ]
 
             return df

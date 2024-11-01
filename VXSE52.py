@@ -17,34 +17,29 @@ class ETL_VXSE52(ETL_jp_disaster):
             # Hypocenter
             hypocenter = soup.find("Hypocenter")
             name = hypocenter.find("Name").text
-            coordinate = hypocenter.find("jmx_eb:Coordinate")["description"].split("　")
 
-            latitude = self.full_width_to_float(
-                coordinate[0].replace("北緯", "").replace("度", "")
+            coordinate = self.process_coordinate(
+                hypocenter.find("jmx_eb:Coordinate").text
             )
 
-            longitude = self.full_width_to_float(
-                coordinate[1].replace("東経", "").replace("度", "")
-            )
-
-            depth = self.full_width_to_float(
-                coordinate[-1]
-                .replace("深さ", "")
-                .replace("ｋｍ", "")
-                .replace("ごく浅い", "0")
-            )
+            latitude = coordinate[0]
+            longitude = coordinate[1]
+            depth = int(-coordinate[2] / 1000)
 
             magnitude = soup.find("jmx_eb:Magnitude").text
+
+            wkt = self.add_wkt(longitude, latitude)
 
             # Add row to DataFrame
             df.loc[len(df)] = [
                 OriginTime,
                 ArrivalTime,
                 name,
-                latitude,
                 longitude,
+                latitude,
                 depth,
                 magnitude,
+                wkt,
             ]
 
             return df
