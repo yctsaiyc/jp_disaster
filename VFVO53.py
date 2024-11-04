@@ -30,8 +30,8 @@ class ETL_VFVO53(ETL_jp_disaster):
             {
                 "Kind": [kind_name] * rows_count,
                 "Area": [area_name] * rows_count,
-                "Latitude": [latitude] * rows_count,
                 "Longitude": [longitude] * rows_count,
+                "Latitude": [latitude] * rows_count,
                 "Height": [height] * rows_count,
             }
         )
@@ -151,6 +151,9 @@ class ETL_VFVO53(ETL_jp_disaster):
 
             df.insert(0, "ReportDateTime", ReportDateTime)
             df.insert(1, "TargetDateTime", TargetDateTime)
+
+            # add wkt
+            df["wkt"] = df.apply(lambda row: self.add_wkt(row[2], row[3]), axis=1)
 
             df.columns = self.columns
 
