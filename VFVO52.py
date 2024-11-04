@@ -1,5 +1,4 @@
 from disaster import ETL_jp_disaster
-from bs4 import BeautifulSoup
 import pandas as pd
 
 ### from airflow.exceptions import AirflowFailException

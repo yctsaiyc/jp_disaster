@@ -1,8 +1,5 @@
 from disaster import ETL_jp_disaster
-from bs4 import BeautifulSoup
 import pandas as pd
-import os
-import shutil
 
 ### from airflow.exceptions import AirflowFailException
 
@@ -10,6 +7,7 @@ import shutil
 class ETL_VFVO53(ETL_jp_disaster):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.type = "降灰予報（定時）"
         self.soup = None
 
     # 降灰予報（対象火山）
@@ -20,11 +18,13 @@ class ETL_VFVO53(ETL_jp_disaster):
         area = volcano_info.find("Area")
         area_name = area.find("Name").text
 
-        coordinate = area.find("Coordinate").text.replace("/", "").split("+")
+        coordinate = self.process_coordinate(
+            area.find("Coordinate").text, format_="dms"
+        )
 
-        latitude = self.dms_to_decimal(float(coordinate[1]))
-        longitude = self.dms_to_decimal(float(coordinate[2]))
-        height = float(coordinate[3])
+        latitude = coordinate[0]
+        longitude = coordinate[1]
+        height = coordinate[2]
 
         df = pd.DataFrame(
             {
@@ -107,7 +107,7 @@ class ETL_VFVO53(ETL_jp_disaster):
 
     # 降灰予報（定時）
     def ash_infos_to_df(self):
-        ash_infos = self.soup.find("AshInfos", {"type": "降灰予報（定時）"})
+        ash_infos = self.soup.find("AshInfos", {"type": self.type})
 
         df = pd.DataFrame()
 
@@ -145,15 +145,12 @@ class ETL_VFVO53(ETL_jp_disaster):
                 axis=1,
             )
 
-            # add ReportDateTime
-            df.insert(
-                0,
-                "DateTime",
-                soup.find("Head")
-                .find("ReportDateTime")
-                .text.replace("T", " ")
-                .replace("+09:00", ""),
-            )
+            # add DateTime
+            ReportDateTime = self.format_datetime(soup.find("ReportDateTime").text)
+            TargetDateTime = self.format_datetime(soup.find("TargetDateTime").text)
+
+            df.insert(0, "ReportDateTime", ReportDateTime)
+            df.insert(1, "TargetDateTime", TargetDateTime)
 
             df.columns = self.columns
 
