@@ -5,21 +5,24 @@ import pandas as pd
 ### from airflow.exceptions import AirflowFailException
 
 
+# 噴火に関する火山観測報
 class ETL_VFVO52(ETL_jp_disaster):
     def get_volcano_observation(self, soup):
         # 3.VolcanoObservation【火山現象の観測内容等】(0 回/1 回)
         volcano_observation = soup.find("VolcanoObservation")
 
-        c_phac_condition = ""
-        c_phac_description = ""
-        c_phas_condition = ""
-        c_phas_description = ""
-        c_pd = ""
-        w_phac_condition = ""
-        w_phac_description = ""
-        w_phas_condition = ""
-        w_phas_description = ""
-        w_pd = ""
+        vo = {
+            "c_phac_condition": "",
+            "c_phac_description": "",
+            "c_phasl_condition": "",
+            "c_phasl_description": "",
+            "c_pd": "",
+            "w_phac_condition": "",
+            "w_phac_description": "",
+            "w_phasl_condition": "",
+            "w_phasl_description": "",
+            "w_pd": "",
+        }
 
         if volcano_observation:
             # 3-1.ColorPlume【有色噴煙】(0 回/1 回)
@@ -28,29 +31,53 @@ class ETL_VFVO52(ETL_jp_disaster):
             if cp:
 
                 # 3-1-1.jmx_eb:PlumeHeightAboveCrater【有色噴煙の火口(縁)上高度】(0 回/1 回)
-                c_phac = volcano_observation.find("jmx_eb:PlumeHeightAboveCrater")
+                c_phac = cp.find("jmx_eb:PlumeHeightAboveCrater")
 
                 if c_phac:
-                    c_phac_condition = getattr(c_phac, "condition", "")
-                    c_phac_description = getattr(c_phac, "description", "")
+                    vo["c_phac_condition"] = c_phac.get("condition", "")
+                    vo["c_phac_description"] = c_phac.get("description", "")
 
                 # 3-1-2.jmx_eb:PlumeHeightAboveSeaLevel【有色噴煙の海抜高度】(0 回/1 回)
-                c_phas = volcano_observation.find("jmx_eb:PlumeHeightAboveSeaLevel")
+                c_phasl = volcano_observation.find("jmx_eb:PlumeHeightAboveSeaLevel")
 
-                if c_phas:
-                    c_phas_condition = getattr(c_phas, "condition", "")
-                    c_phas_description = getattr(c_phas, "description", "")
+                if c_phasl:
+                    vo["c_phasl_condition"] = c_phasl.get("condition", "")
+                    vo["c_phasl_description"] = c_phasl.get("description", "")
 
                 # 3-1-3.jmx_eb:PlumeDirection【有色噴煙の流向】(0 回/1 回)
                 c_pd = volcano_observation.find("jmx_eb:PlumeDirection")
 
                 if c_pd:
-                    c_pd = c_pd.text
+                    vo["c_pd"] = c_pd.text
 
             # 3-1-4.PlumeComment【有色噴煙の補足】(0 回/1 回)
 
             # 3-2.WhitePlume【白色噴煙】(0 回/1 回)
             wp = volcano_observation.find("WhitePlume")
+
+            if wp:
+
+                # 3-1-1.jmx_eb:PlumeHeightAboveCrater【白色噴煙の火口(縁)上高度】(0 回/1 回)
+                w_phac = wp.find("jmx_eb:PlumeHeightAboveCrater")
+
+                if w_phac:
+                    vo["w_phac_condition"] = w_phac.get("condition", "")
+                    vo["w_phac_description"] = w_phac.get("description", "")
+
+                # 3-1-2.jmx_eb:PlumeHeightAboveSeaLevel【白色噴煙の海抜高度】(0 回/1 回)
+                w_phasl = volcano_observation.find("jmx_eb:PlumeHeightAboveSeaLevel")
+
+                if w_phasl:
+                    vo["w_phasl_condition"] = w_phasl.get("condition", "")
+                    vo["w_phasl_description"] = w_phasl.get("description", "")
+
+                # 3-1-3.jmx_eb:PlumeDirection【白色噴煙の流向】(0 回/1 回)
+                w_pd = volcano_observation.find("jmx_eb:PlumeDirection")
+
+                if w_pd:
+                    vo["w_pd"] = w_pd.text
+
+        return vo
 
     def xml_to_df(self, xml_path, soup):
         try:
@@ -61,18 +88,7 @@ class ETL_VFVO52(ETL_jp_disaster):
             target_date_time = self.format_datetime(soup.find("TargetDateTime").text)
 
             # 3.VolcanoObservation【火山現象の観測内容等】(0 回/1 回)
-            (
-                c_phac_condition,
-                c_phac_description,
-                c_phas_condition,
-                c_phas_description,
-                c_pd,
-                w_phac_condition,
-                w_phac_description,
-                w_phas_condition,
-                w_phas_description,
-                w_pd,
-            ) = self.get_volcano_observation(soup)
+            vo = self.get_volcano_observation(soup)
 
             # 2.VolcanoInfo【防災気象情報事項】(1 回)
             volcano_info = soup.find("VolcanoInfo")
@@ -115,16 +131,16 @@ class ETL_VFVO52(ETL_jp_disaster):
                     longitude,
                     latitude,
                     height,
-                    c_phac_condition,
-                    c_phac_description,
-                    c_phas_condition,
-                    c_phas_description,
-                    c_pd,
-                    w_phac_condition,
-                    w_phac_description,
-                    w_phas_condition,
-                    w_phas_description,
-                    w_pd,
+                    vo["c_phac_condition"],
+                    vo["c_phac_description"],
+                    vo["c_phasl_condition"],
+                    vo["c_phasl_description"],
+                    vo["c_pd"],
+                    vo["w_phac_condition"],
+                    vo["w_phac_description"],
+                    vo["w_phasl_condition"],
+                    vo["w_phasl_description"],
+                    vo["w_pd"],
                     wkt,
                 ]
 
