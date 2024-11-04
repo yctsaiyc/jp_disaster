@@ -12,28 +12,6 @@ class ETL_VFVO53(ETL_jp_disaster):
         super().__init__(*args, **kwargs)
         self.soup = None
 
-    def df_to_csv(self, df, xml_path, subfolder=None):
-        if subfolder is None:
-            subfolder = self.data_dir
-
-        else:
-            subfolder = os.path.join(self.data_dir, subfolder)
-            os.makedirs(subfolder, exist_ok=True)
-
-        csv_path = os.path.join(
-            subfolder, os.path.basename(xml_path).replace(".xml", ".csv")
-        )
-        df.to_csv(csv_path, index=False, encoding="utf-8")
-        print("Saved:", csv_path)
-
-    def move_xml(self, xml_path):
-        target_dir = os.path.join(self.data_dir, "xml", "converted")
-        os.makedirs(target_dir, exist_ok=True)
-        target_path = os.path.join(target_dir, os.path.basename(xml_path))
-
-        shutil.move(xml_path, target_path)
-        print(f"Moved {xml_path} to {target_path}")
-
     # 降灰予報（対象火山）
     def volcano_info_1_to_df(self, rows_count=1):
         volcano_info = self.soup.find("VolcanoInfo", {"type": "降灰予報（対象火山）"})
@@ -146,19 +124,14 @@ class ETL_VFVO53(ETL_jp_disaster):
         try:
             self.soup = soup
 
-            # df = pd.DataFrame(columns=self.columns)
-
             # 降灰予報（対象火山）
             df_volcano_info_1 = self.volcano_info_1_to_df()
-            # self.df_to_csv(df_volcano_info_1, xml_path, subfolder="volcano_info_1")
 
             # # 降灰予報（対象市町村等）
             # df_volcano_info_2 = self.volcano_info_2_to_df()
-            # self.df_to_csv(df_volcano_info_2, xml_path, subfolder="volcano_info_2")
 
             # 降灰予報（定時）
             df_ash_infos = self.ash_infos_to_df()
-            # self.df_to_csv(df, xml_path, subfolder="ash_infos")
 
             # 合併降灰予報（対象火山）& 降灰予報（定時）
             df_volcano_info_repeated = pd.concat(
@@ -184,10 +157,7 @@ class ETL_VFVO53(ETL_jp_disaster):
 
             df.columns = self.columns
 
-            self.df_to_csv(df, xml_path)
-
-            # 移到"converted"
-            self.move_xml(xml_path)
+            return df
 
         except Exception as e:
             raise  ### AirflowFailException(e)
