@@ -12,6 +12,20 @@
         "eqvol": "https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml",
         "other": "https://www.data.jma.go.jp/developer/xml/feed/other.xml"
     },
+    "titles": {
+        "eqvol": {
+            "VFVO50": "噴火警報・予報",
+            "VFVO51": "火山の状況に関する解説情報",
+            "VFVO52": "噴火に関する火山観測報",
+            "VFVO53": "降灰予報（定時）",
+            "VFVO54": "降灰予報（速報）",
+            "VFVO55": "降灰予報（詳細）",
+            "VFVO60": "推定噴煙流向報",
+            "VXSE51": "震度速報",
+            "VXSE52": "震源に関する情報",
+            "VXSE53": "震源・震度に関する情報"
+        }
+    },
     "columns": {
         "regular": {
             "VPRN50": [
