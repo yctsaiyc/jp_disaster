@@ -69,11 +69,8 @@ class XML_saver:
                     response.encoding = "utf-8"
                     xml = response.text
 
-                    soup = BeautifulSoup(xml, "xml")
-                    pretty_xml = soup.prettify()
-
                     with open(xml_path, "w") as file:
-                        file.write(pretty_xml)
+                        file.write(xml)
 
                     print("Saved:", xml_path)
 
