@@ -82,25 +82,13 @@ class ETL_VFVO60(ETL_jp_disaster):
                     phac = cp.find("jmx_eb:PlumeHeightAboveCrater")
 
                     if phac:
-                        row_dict["有色噴煙の火口(縁)上高度_condition"] = phac.get(
-                            "condition", ""
-                        )
-
-                        row_dict["有色噴煙の火口(縁)上高度_description"] = phac.get(
-                            "description", ""
-                        )
+                        row_dict["有色噴煙の火口(縁)上高度"] = phac.text
 
                     # 3-1-2.jmx_eb:PlumeHeightAboveSeaLevel【有色噴煙の海抜高度】(0 回/1 回)
                     phasl = volcano_observation.find("jmx_eb:PlumeHeightAboveSeaLevel")
 
                     if phasl:
-                        row_dict["有色噴煙の海抜高度_condition"] = phasl.get(
-                            "condition", ""
-                        )
-
-                        row_dict["有色噴煙の海抜高度_description"] = phasl.get(
-                            "description", ""
-                        )
+                        row_dict["有色噴煙の海抜高度"] = phasl.text
 
                     # 3-1-3.jmx_eb:PlumeDirection【有色噴煙の流向】(1 回)
                     pd_ = volcano_observation.find("jmx_eb:PlumeDirection")
