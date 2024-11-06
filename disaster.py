@@ -4,6 +4,7 @@ import os
 from bs4 import BeautifulSoup
 import glob
 import shutil
+import re
 
 
 class XML_saver:
@@ -114,6 +115,9 @@ class ETL_jp_disaster:
 
             with open(xml_path, "r", encoding="utf-8") as file:
                 xml_data = file.read()
+
+            # fix: handle issues caused by soup.prettify() formatting
+            xml_data = re.sub(r">\n\s*(.*?)\n\s*<", r">\1<", xml_data)
 
             soup = BeautifulSoup(xml_data, "xml")
             df = self.xml_to_df(xml_path, soup)
