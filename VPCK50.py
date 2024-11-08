@@ -203,72 +203,100 @@ class ETL_VPCK50(ETL_jp_disaster):
             # 期間ごとの概況文・特徴のある確率文を出力する Item
             # [解説] 概況文・特徴のある確率文(Kind/Property 部) 及び地域(Areas 部)を記載する。
             # 期間ごとの概況文、特徴のある確率文を出力する Item は 1 つのみ
-            Items = TimeSeiresInfo.find("Item")
+            Items = TimeSeiresInfo.find_all("Item")
 
-            # 3-3-2-2-1 Property 部
-            # [解説]「3-3-1-4-1 Property 部」と同様
+            for Item in Items:
 
-            # 3-3-2-2-1-1 ClimateFeaturePart 部
-            # 天候の特徴
-            # [解説] 3か月予報の場合のみ、出現の可能性が最も大きい天候を平文表現(GeneralSituationText)で記載する
-            # 特徴のある気温、降水量、日照時間等の確率(SingnificantClimateElement 部)をそれぞれ記載する
+                # 3-3-2-2-1 Property 部
+                # [解説]「3-3-1-4-1 Property 部」と同様
+                if (
+                    Item.find("Type").text
+                    == "出現の可能性が最も大きい天候と、特徴のある気温、降水量等の確率"
+                ):
 
-            # 3-3-2-2-1-1-1 GeneralSituationText
-            # 出現の可能性が最も大きい天候の平文表現
-            # [解説] refID 属性の属性値は TimeSeriesInfo/TimeDefines/TimeDefine で定義した timeId の属性値をセットする
-            # 3か月予報の場合のみ出現する
-            #
-            # 3-3-2-2-1-1-2 jmx_eb:SignificantClimateElement 部
-            # 特徴のある気温、降水量、日照時間等の確率
-            # [解説] 「3-3-1-4-1-1-1 jmx_eb:SignificantClimateElement 部」 と同様
-            # kind 属性により、特徴のある確率の気象要素名を記載する。
-            # 属性値は次のいずれかをとる "気温" "降水量" "日照時間" "降雪量"
-            # 複数の気象要素が「特徴のある確率」をもつ場合は、それぞれの気象要素についてこの要素を出力し、こ
-            # の要素の子要素(significantClimateElement/Text)で特徴のある確率を平文で記載する
+                    # 3-3-2-2-1-1 ClimateFeaturePart 部
+                    # 天候の特徴
+                    # [解説] 3か月予報の場合のみ、出現の可能性が最も大きい天候を平文表現(GeneralSituationText)で記載する
+                    # 特徴のある気温、降水量、日照時間等の確率(SingnificantClimateElement 部)をそれぞれ記載する
+                    ClimateFeaturePart = Item.find("ClimateFeaturePart")
 
-            # 3-3-2-2-1-1-2-1 Text
-            # 特徴のある確率を平文で記載する
-            # [解説] refID 属性の属性値は TimeSeriesInfo/TimeDefines/TimeDefine で定義した timeId の属性値をセットする
+                    # 3-3-2-2-1-1-1 GeneralSituationText
+                    # 出現の可能性が最も大きい天候の平文表現
+                    # [解説] refID 属性の属性値は TimeSeriesInfo/TimeDefines/TimeDefine で定義した timeId の属性値をセットする
+                    # 3か月予報の場合のみ出現する
 
-            # 3-3-2-2-2 Areas 部
-            # 地域名要素全体
-            # [解説] codeType 属性の属性値は"全国・地方予報区等"で固定。
-            # 対象地域(Area)を記載する
-            # 属性値により、Area の子要素のコード種別(Area/Code)が"全国・地方予報区等"であることを示す
-            # Kind 部で表示する内容の対象となる地域名称(Area/Name)とコード値(Area/Code)を記載する
+                    # 3-3-2-2-1-1-2 jmx_eb:SignificantClimateElement 部
+                    # 特徴のある気温、降水量、日照時間等の確率
+                    # [解説] 「3-3-1-4-1-1-1 jmx_eb:SignificantClimateElement 部」 と同様
+                    # kind 属性により、特徴のある確率の気象要素名を記載する。
+                    # 属性値は次のいずれかをとる "気温" "降水量" "日照時間" "降雪量"
+                    # 複数の気象要素が「特徴のある確率」をもつ場合は、それぞれの気象要素についてこの要素を出力し、こ
+                    # の要素の子要素(significantClimateElement/Text)で特徴のある確率を平文で記載する
+                    SignificantClimateElement = ClimateFeaturePart.find("jmx_eb:SignificantClimateElement")
+                    SignigicantClimateElement_kind = SignificantClimateElement.get("kind")
 
-            # 3-3-2-3 Item 部
-            # 各期間ごとの確率値を出力する Item
-            # [解説]予報要素・確率値(Kind/Property 部) 及び地域(Areas 部)を記載する。
-            # 1地域・1気象要素ごとに Item を出力する(複数個出力可)
+                    # 3-3-2-2-1-1-2-1 Text
+                    # 特徴のある確率を平文で記載する
+                    # [解説] refID 属性の属性値は TimeSeriesInfo/TimeDefines/TimeDefine で定義した timeId の属性値をセットする
+                    SignigicantClimateElement_dict = {}
 
-            # 3-3-2-3-1 Property 部
-            # [解説] 「3-3-1-5-1 Property」と同様
+                    for Text in SignificantClimateElement.find_all("jmx_eb:Text"):
+                        refID = Text.get("refID")
+                        text = Text.text
+                        SignigicantClimateElement_DateTime_dict[refID] = text
 
-            # 3-3-2-3-1-1 ClimateProbabilityValuesPart
-            # [解説] 3-3-1-5-1-1 「ClimateProbabilityValuesPart」と同様
+                    # 3-3-2-2-2 Areas 部
+                    # 地域名要素全体
+                    # [解説] codeType 属性の属性値は"全国・地方予報区等"で固定。
+                    # 対象地域(Area)を記載する
+                    # 属性値により、Area の子要素のコード種別(Area/Code)が"全国・地方予報区等"であることを示す
+                    # Kind 部で表示する内容の対象となる地域名称(Area/Name)とコード値(Area/Code)を記載する
 
-            # 3-3-2-2-1-1-1 jmx_eb:ClimateProbabilityValues 部
-            # [解説] refID 属性の属性値は TimeSeriesInfo/TimeDefines/TimeDefine で定義した timeId の属性値をセットする
-            # kind 属性により、気象要素名を記載する。
-            # kind 属性の値は次のいずれかをとる "気温""降水量" "日照時間" "降雪量"
-            # 確率値は、
-            # ・平年より低い(少ない)確率(ProbabilityOfBelowNormal)
-            # ・平年並の確率(ProbabilityOfNormal)
-            # ・平年より多い(多い)確率(ProbabilityOfAboveNormal)
-            # で記載する
+                # 3-3-2-3 Item 部
+                # 各期間ごとの確率値を出力する Item
+                # [解説]予報要素・確率値(Kind/Property 部) 及び地域(Areas 部)を記載する。
+                # 1地域・1気象要素ごとに Item を出力する(複数個出力可)
 
-            # 3-3-2-2-1-1-1-1 jmx_eb:ProbabilityOfBelowNormal
-            # jmx_eb:ProbabilityOfNormal
-            # jmx_eb:ProbabilityOfAboveNormal
-            # [解説] 3-3-1-5-1-1-1-1 と同様
+                # 3-3-2-3-1 Property 部
+                # [解説] 「3-3-1-5-1 Property」と同様
+                elif Item.find("Type").text == "地域・期間平均平年偏差各階級の確率":
 
-            # 3-3-2-3-2 Areas 部
-            # 地域名要素全体
-            # [解説] codeType 属性の属性値は"全国・地方予報区等"で固定。
-            # 対象地域(Area)を記載する
-            # 属性値により、Area の子要素のコード種別(Area/Code)が"全国・地方予報区等"であることを示す
-            # Kind 部で表示する内容の対象となる地域名称(Area/Name)とコード値(Area/Code)を記載する
+                    # 3-3-2-3-1-1 ClimateProbabilityValuesPart
+                    # [解説] 3-3-1-5-1-1 「ClimateProbabilityValuesPart」と同様
+                    ProbabilityValueKind = Item.find(
+                        "jmx_eb:ClimateProbabilityValues"
+                    ).get("kind", "")
+
+                    # 3-3-2-2-1-1-1 jmx_eb:ClimateProbabilityValues 部
+                    # [解説] refID 属性の属性値は TimeSeriesInfo/TimeDefines/TimeDefine で定義した timeId の属性値をセットする
+                    # kind 属性により、気象要素名を記載する。
+                    # kind 属性の値は次のいずれかをとる "気温""降水量" "日照時間" "降雪量"
+                    # 確率値は、
+                    # ・平年より低い(少ない)確率(ProbabilityOfBelowNormal)
+                    # ・平年並の確率(ProbabilityOfNormal)
+                    # ・平年より多い(多い)確率(ProbabilityOfAboveNormal)
+                    # で記載する
+
+                    # 3-3-2-2-1-1-1-1 jmx_eb:ProbabilityOfBelowNormal
+                    # jmx_eb:ProbabilityOfNormal
+                    # jmx_eb:ProbabilityOfAboveNormal
+                    # [解説] 3-3-1-5-1-1-1-1 と同様
+                    ProbabilityOfBelowNormal = Item.find(
+                        "jmx_eb:ProbabillityOfBelowNormal"
+                    ).text
+
+                    ProbabilityOfNormal = Item.find("jmx_eb:ProbabillityOfNormal").text
+
+                    ProbabilityOfAboveNormal = Item.find(
+                        "jmx_eb:ProbabillityOfAboveNormal"
+                    ).text
+
+                    # 3-3-2-3-2 Areas 部
+                    # 地域名要素全体
+                    # [解説] codeType 属性の属性値は"全国・地方予報区等"で固定。
+                    # 対象地域(Area)を記載する
+                    # 属性値により、Area の子要素のコード種別(Area/Code)が"全国・地方予報区等"であることを示す
+                    # Kind 部で表示する内容の対象となる地域名称(Area/Name)とコード値(Area/Code)を記載する
 
             return df
 
