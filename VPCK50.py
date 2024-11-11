@@ -54,6 +54,18 @@ class ETL_VPCK50(ETL_jp_disaster):
             # 予想確率値・確率文等(Item))を記載する
             MeteorologicalInfo = soup.find("MeteorologicalInfo")
 
+            # 3-3-1-1 DateTime
+            # 予報・観測の基点時刻
+            # [解説] significant 属性値により、時刻の有効部分が["日"]までであることを示す。
+            # JST 表記の DateTime 型で表記する
+            DateTime = self.format_datetime(MeteorologicalInfo.find("DateTime").text)
+
+            # 3-3-1-2 Duration
+            # 予報期間の長さ
+            # [解説] "P1M" : 1か月予報の場合
+            # "P3M" : 3か月予報・寒候期予報・暖候期予報の場合
+            # "P2M" : 梅雨情報をもつ<MeteorologicalInfo>の場合 ※暖候期予報のみ
+
             # 3-3-1-3 Name
             # 予報時間の内容
             # [解説] 予報期間の文字表現として、次の値のいずれかをとる
@@ -83,6 +95,7 @@ class ETL_VPCK50(ETL_jp_disaster):
                     Item.find("Type").text
                     == "出現の可能性が最も大きい天候と、特徴のある気温、降水量等の確率"
                 ):
+                    pass  # 資料是文字
 
                     # 3-3-1-4-1-1 ClimateFeaturePart 部
                     # 天候の特徴
@@ -96,7 +109,6 @@ class ETL_VPCK50(ETL_jp_disaster):
                     # 属性値は次のいずれかをとる "気温""降水量" "日照時間" "降雪量"
                     # 複数の気象要素が「特徴のある確率」をもつ場合は、それぞれの気象要素についてこの要素を出力し、こ
                     # の要素の子要素(significantClimateElement/Text)で特徴のある確率を平文で記載する
-                    pass  # 資料是文字
 
                     # 3-3-1-4-2 Areas 部
                     # 地域名要素全体
@@ -128,9 +140,7 @@ class ETL_VPCK50(ETL_jp_disaster):
                     # ・平年並の確率(ProbabilityOfNormal)
                     # ・平年より多い(多い)確率(ProbabilityOfAboveNormal)
                     # で記載する
-                    ProbabilityValueKind = Item.find(
-                        "jmx_eb:ClimateProbabilityValues"
-                    ).get("kind", "")
+                    kind = Item.find("jmx_eb:ClimateProbabilityValues").get("kind", "")
 
                     # 3-3-1-5-1-1-1-1 jmx_eb:ProbabillityOfBelowNormal
                     # jmx_eb:ProbabillityOfNormal
@@ -138,15 +148,20 @@ class ETL_VPCK50(ETL_jp_disaster):
                     # [解説] unit 属性により、単位を示す。確率値の場合は"%"で固定
                     # significant 属性は出力する値が「特徴のある確率」であるときのみ"true"を出力
                     # jmx_eb:ClimateProbabilityValues の kind 属性で指定された気象要素に対する確率値を出力する。
-                    ProbabilityOfBelowNormal = Item.find(
-                        "jmx_eb:ProbabillityOfBelowNormal"
-                    ).text
+                    pobn = Item.find("jmx_eb:ProbabilityOfBelowNormal")
 
-                    ProbabilityOfNormal = Item.find("jmx_eb:ProbabillityOfNormal").text
+                    if pobn:
+                        pobn = pobn.text
 
-                    ProbabilityOfAboveNormal = Item.find(
-                        "jmx_eb:ProbabillityOfAboveNormal"
-                    ).text
+                    pon = Item.find("jmx_eb:ProbabilityOfNormal")
+
+                    if pon:
+                        pon = pon.text
+
+                    poan = Item.find("jmx_eb:ProbabilityOfAboveNormal")
+
+                    if poan:
+                        poan = poan.text
 
                     # 3-3-1-5-2 Areas 部
                     # 地域名要素全体
@@ -154,18 +169,31 @@ class ETL_VPCK50(ETL_jp_disaster):
                     # 対象地域(Area)を記載する
                     # 属性値により、Area の子要素のコード種別(Area/Code)が"全国・地方予報区等"であることを示す
                     # Kind 部で表示する内容の対象となる地域名称(Area/Name)とコード値(Area/Code)を記載する
-                    Area = Item.find("Area").find("Name").text
+                    Area_Name = Item.find("Area").find("Name").text
+
+                    df.loc[len(df)] = [
+                        Title,  # 電文の種別を示すための情報名称
+                        ReportDateTime,  # 発表時刻
+                        TargetDateTime,  # 基点時刻
+                        DateTime,  # 予報・観測の基点時刻
+                        Name,  # 予報・観測時間の内容
+                        Area_Name,  # 対象地域
+                        kind,  # 気象要素名
+                        pobn,  # 平年より低い(少ない)確率
+                        pon,  # 平年並の確率
+                        poan,  # 平年より多い(多い)確率
+                    ]
 
             # 3-3-2 TimeSeiresInfo 部
             # 時系列情報
             # [解説] 期間の定義(TimeDefines)、各期間ごとの予報内容(Item)を記載する
             # 暖候期予報・寒候期予報の場合は出現しない
-            TimeSeiresInfo = soup.find("TimeSeiresInfo")
+            TimeSeriesInfo = soup.find("TimeSeriesInfo")
 
             # 3-3-2-1 TimeDefines 部
             # 時系列の時刻定義群
             # [解説] この要素が示す時系列の時刻定義(TimeDefine)群を示す
-            TimeDefines = TimeSeiresInfo.find("TimeDefines")
+            TimeDefines = TimeSeriesInfo.find("TimeDefines")
 
             # 3-3-2-1-1 TimeDefine 部
             # 個々の時刻定義
@@ -193,7 +221,9 @@ class ETL_VPCK50(ETL_jp_disaster):
                 # 1か月予報 : "1週目" "2週目" "3~4週目"
                 # 3か月予報 : "*月" ※予報対象期間内の各月(1か月目の月・2か月目の月・3か月目の月)
                 timeId = TimeDefine.get("timeId")
-                TimeDefine_DateTime = TimeDefine.find("DateTime").text
+                TimeDefine_DateTime = self.format_datetime(
+                    TimeDefine.find("DateTime").text
+                )
                 TimeDefine_Name = TimeDefine.find("Name").text
 
                 TimeDefine_DateTime_dict[timeId] = TimeDefine_DateTime
@@ -203,7 +233,7 @@ class ETL_VPCK50(ETL_jp_disaster):
             # 期間ごとの概況文・特徴のある確率文を出力する Item
             # [解説] 概況文・特徴のある確率文(Kind/Property 部) 及び地域(Areas 部)を記載する。
             # 期間ごとの概況文、特徴のある確率文を出力する Item は 1 つのみ
-            Items = TimeSeiresInfo.find_all("Item")
+            Items = TimeSeriesInfo.find_all("Item")
 
             for Item in Items:
 
@@ -213,12 +243,12 @@ class ETL_VPCK50(ETL_jp_disaster):
                     Item.find("Type").text
                     == "出現の可能性が最も大きい天候と、特徴のある気温、降水量等の確率"
                 ):
+                    pass  # 資料是文字，內容與"地域・期間平均平年偏差各階級の確率"重複
 
                     # 3-3-2-2-1-1 ClimateFeaturePart 部
                     # 天候の特徴
                     # [解説] 3か月予報の場合のみ、出現の可能性が最も大きい天候を平文表現(GeneralSituationText)で記載する
                     # 特徴のある気温、降水量、日照時間等の確率(SingnificantClimateElement 部)をそれぞれ記載する
-                    ClimateFeaturePart = Item.find("ClimateFeaturePart")
 
                     # 3-3-2-2-1-1-1 GeneralSituationText
                     # 出現の可能性が最も大きい天候の平文表現
@@ -232,18 +262,10 @@ class ETL_VPCK50(ETL_jp_disaster):
                     # 属性値は次のいずれかをとる "気温" "降水量" "日照時間" "降雪量"
                     # 複数の気象要素が「特徴のある確率」をもつ場合は、それぞれの気象要素についてこの要素を出力し、こ
                     # の要素の子要素(significantClimateElement/Text)で特徴のある確率を平文で記載する
-                    SignificantClimateElement = ClimateFeaturePart.find("jmx_eb:SignificantClimateElement")
-                    SignigicantClimateElement_kind = SignificantClimateElement.get("kind")
 
                     # 3-3-2-2-1-1-2-1 Text
                     # 特徴のある確率を平文で記載する
                     # [解説] refID 属性の属性値は TimeSeriesInfo/TimeDefines/TimeDefine で定義した timeId の属性値をセットする
-                    SignigicantClimateElement_dict = {}
-
-                    for Text in SignificantClimateElement.find_all("jmx_eb:Text"):
-                        refID = Text.get("refID")
-                        text = Text.text
-                        SignigicantClimateElement_DateTime_dict[refID] = text
 
                     # 3-3-2-2-2 Areas 部
                     # 地域名要素全体
@@ -263,40 +285,65 @@ class ETL_VPCK50(ETL_jp_disaster):
 
                     # 3-3-2-3-1-1 ClimateProbabilityValuesPart
                     # [解説] 3-3-1-5-1-1 「ClimateProbabilityValuesPart」と同様
-                    ProbabilityValueKind = Item.find(
-                        "jmx_eb:ClimateProbabilityValues"
-                    ).get("kind", "")
 
                     # 3-3-2-2-1-1-1 jmx_eb:ClimateProbabilityValues 部
-                    # [解説] refID 属性の属性値は TimeSeriesInfo/TimeDefines/TimeDefine で定義した timeId の属性値をセットする
-                    # kind 属性により、気象要素名を記載する。
-                    # kind 属性の値は次のいずれかをとる "気温""降水量" "日照時間" "降雪量"
-                    # 確率値は、
-                    # ・平年より低い(少ない)確率(ProbabilityOfBelowNormal)
-                    # ・平年並の確率(ProbabilityOfNormal)
-                    # ・平年より多い(多い)確率(ProbabilityOfAboveNormal)
-                    # で記載する
+                    cpvs = Item.find_all("jmx_eb:ClimateProbabilityValues")
 
-                    # 3-3-2-2-1-1-1-1 jmx_eb:ProbabilityOfBelowNormal
-                    # jmx_eb:ProbabilityOfNormal
-                    # jmx_eb:ProbabilityOfAboveNormal
-                    # [解説] 3-3-1-5-1-1-1-1 と同様
-                    ProbabilityOfBelowNormal = Item.find(
-                        "jmx_eb:ProbabillityOfBelowNormal"
-                    ).text
+                    for cpv in cpvs:
 
-                    ProbabilityOfNormal = Item.find("jmx_eb:ProbabillityOfNormal").text
+                        # [解説] refID 属性の属性値は TimeSeriesInfo/TimeDefines/TimeDefine で定義した timeId の属性値をセットする
+                        # kind 属性により、気象要素名を記載する。
+                        # kind 属性の値は次のいずれかをとる "気温""降水量" "日照時間" "降雪量"
+                        # 確率値は、
+                        # ・平年より低い(少ない)確率(ProbabilityOfBelowNormal)
+                        # ・平年並の確率(ProbabilityOfNormal)
+                        # ・平年より多い(多い)確率(ProbabilityOfAboveNormal)
+                        # で記載する
+                        kind = cpv.get("kind", "")
+                        refID = cpv.get("refID", "")
 
-                    ProbabilityOfAboveNormal = Item.find(
-                        "jmx_eb:ProbabillityOfAboveNormal"
-                    ).text
+                        # 3-3-2-2-1-1-1-1 jmx_eb:ProbabilityOfBelowNormal
+                        # jmx_eb:ProbabilityOfNormal
+                        # jmx_eb:ProbabilityOfAboveNormal
+                        # [解説] 3-3-1-5-1-1-1-1 と同様
+                        pobn = cpv.find("jmx_eb:ProbabilityOfBelowNormal")
 
-                    # 3-3-2-3-2 Areas 部
-                    # 地域名要素全体
-                    # [解説] codeType 属性の属性値は"全国・地方予報区等"で固定。
-                    # 対象地域(Area)を記載する
-                    # 属性値により、Area の子要素のコード種別(Area/Code)が"全国・地方予報区等"であることを示す
-                    # Kind 部で表示する内容の対象となる地域名称(Area/Name)とコード値(Area/Code)を記載する
+                        if pobn:
+                            pobn = pobn.text
+
+                        pon = cpv.find("jmx_eb:ProbabilityOfNormal")
+
+                        if pon:
+                            pon = pon.text
+
+                        poan = cpv.find("jmx_eb:ProbabilityOfAboveNormal")
+
+                        if poan:
+                            poan = poan.text
+
+                        TimeDefine_DateTime = TimeDefine_DateTime_dict[refID]
+                        TimeDefine_Name = TimeDefine_Name_dict[refID]
+
+                        # 3-3-2-3-2 Areas 部
+                        # 地域名要素全体
+                        # [解説] codeType 属性の属性値は"全国・地方予報区等"で固定。
+                        # 対象地域(Area)を記載する
+                        # 属性値により、Area の子要素のコード種別(Area/Code)が"全国・地方予報区等"であることを示す
+                        # Kind 部で表示する内容の対象となる地域名称(Area/Name)とコード値(Area/Code)を記載する
+                        Area_Name = Item.find("Area").find("Name").text
+
+                        df.loc[len(df)] = [
+                            Title,  # 電文の種別を示すための情報名称
+                            ReportDateTime,  # 発表時刻
+                            TargetDateTime,  # 基点時刻
+                            TimeDefine_DateTime,  # 予報・観測の基点時刻
+                            TimeDefine_Name,  # 予報・観測時間の内容
+                            Area_Name,  # 対象地域
+                            kind,  # 気象要素名
+                            pobn,  # 平年より低い(少ない)確率
+                            pon,  # 平年並の確率
+                            poan,  # 平年より多い(多い)確率
+                        ]
 
             return df
 
