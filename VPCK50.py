@@ -218,9 +218,7 @@ class ETL_VPCK50(ETL_jp_disaster):
             # 1か月予報 : "1週目" "2週目" "3~4週目"
             # 3か月予報 : "*月" ※予報対象期間内の各月(1か月目の月・2か月目の月・3か月目の月)
             timeId = TimeDefine.get("timeId")
-            TimeDefine_DateTime = self.format_datetime(
-                TimeDefine.find("DateTime").text
-            )
+            TimeDefine_DateTime = self.format_datetime(TimeDefine.find("DateTime").text)
             TimeDefine_Name = TimeDefine.find("Name").text
 
             TimeDefine_DateTime_dict[timeId] = TimeDefine_DateTime
