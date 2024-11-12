@@ -150,8 +150,8 @@ class ETL_VPCK70(ETL_jp_disaster):
                         compare_type,  # 気象要素名
                         DateTime,  # 予報対象基点時刻
                         Name,  # 対象期間の内容
-                        description,  # 階級値の文字列
-                        value,  # 期間平均・地域平均気温の平年偏差階級
+                        description,  # 期間平均・地域平均気温の平年偏差階級
+                        None,  # value,  # 予想気温の内容を期間平均値  ## 和description 重複
                     ]
 
                 # └ Area 予報対象地域を記述する。※
@@ -262,8 +262,8 @@ class ETL_VPCK70(ETL_jp_disaster):
                                 temperature_type,  # 気象要素名
                                 DateTime,  # 予報対象基点時刻
                                 Name,  # 対象期間の内容
-                                description,  # 階級値の文字列
-                                value,  # 期間平均・地域平均気温の平年偏差階級
+                                None,  # description,  # 期間平均・地域平均気温の平年偏差階級  ## 和Value重複
+                                value,  # 予想気温の内容を期間平均値
                             ]
 
                         #     └ jmx_eb:Comparison 気温の期間平均値の予想階級を記述する。
@@ -294,8 +294,8 @@ class ETL_VPCK70(ETL_jp_disaster):
                                 compare_type,  # 気象要素名
                                 DateTime,  # 予報対象基点時刻
                                 Name,  # 対象期間の内容
-                                description,  # 階級値の文字列
-                                value,  # 期間平均・地域平均気温の平年偏差階級
+                                description,  # 期間平均・地域平均気温の平年偏差階級
+                                None,  # value,  # 予想気温の内容を期間平均値  ## 和description重複
                             ]
 
                     # └ Station 予報対象地点について記述する。※
