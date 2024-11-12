@@ -5,6 +5,8 @@ import pandas as pd
 # 地方季節予報 (地方１か月予報，地方３か月予報，地方暖・寒候期予報)
 # 気象庁防災情報XMLフォーマット　技術資料: https://xml.kishou.go.jp/tec_material.html
 # 電文毎の解説資料: https://xml.kishou.go.jp/jmaxml_20241031_Manual(pdf).zip
+
+
 class ETL_VPCK50(ETL_jp_disaster):
     def xml_to_df(self, xml_path, soup):
         df = pd.DataFrame(columns=self.columns)
