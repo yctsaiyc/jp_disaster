@@ -33,7 +33,11 @@ class ETL_VPCK50(ETL_jp_disaster):
         # 3-1 TargetArea 部 発表官署の担当地域を記載する
 
         # 3-3 MeteorologicalInfos 部
+        MeteorologicalInfos = soup.find("MeteorologicalInfos")
+
         # Type 属性の属性値は"季節予報"で固定
+        MeteorologicalInfos_type = MeteorologicalInfos.get("type")
+
         # 各地域ごと(MeteorologicalInfo)や各期間ごと(TimeSeriesInfo)の予報内容に関する事項を記載する
         # [解説] 標題(<Head><Title>)によって、この要素の子要素は次のようになる
         # ・寒候期、暖候期以外の場合
@@ -49,7 +53,7 @@ class ETL_VPCK50(ETL_jp_disaster):
         # 3-3-1 MeteorologicalInfo 部
         # [解説] 各地域ごとの予報内容(予報基点時刻(DateTime)、予報期間の長さ(Duration)、予報期間の内容(Name)、
         # 予想確率値・確率文等(Item))を記載する
-        MeteorologicalInfo = soup.find("MeteorologicalInfo")
+        MeteorologicalInfo = MeteorologicalInfos.find("MeteorologicalInfo")
 
         # 3-3-1-1 DateTime
         # 予報・観測の基点時刻
@@ -88,8 +92,10 @@ class ETL_VPCK50(ETL_jp_disaster):
             # 概況文・特徴のある確率文を記載する
             # [解説] ・概況前文(Type)と天候の特徴(ClimatFeaturePert)を記載する
             # ・Property/Type は概況文の前文として、次の値をとる"出現の可能性が最も大きい天候と、特徴のある気温、降水量等の確率"
+            Property_Type = Item.find("Property").find("Type").text
+
             if (
-                Item.find("Type").text
+                Property_Type
                 == "出現の可能性が最も大きい天候と、特徴のある気温、降水量等の確率"
             ):
                 pass  # 資料是文字
@@ -123,7 +129,7 @@ class ETL_VPCK50(ETL_jp_disaster):
             # 予報要素・確率値を記載する
             # [解説] ・概況前文(Type)と天候の特徴(ClimateProbabilityValuesPart)を記載する
             # ・Property/Type は概況文の前文として、次の値をとる"地域・期間平均平年偏差各階級の確率"
-            elif Item.find("Type").text == "地域・期間平均平年偏差各階級の確率":
+            elif Property_Type == "地域・期間平均平年偏差各階級の確率":
 
                 # 3-3-1-5-1-1 ClimateProbabilityValuesPart 部
                 # 気温、降水量、日照時間等の確率
@@ -172,20 +178,24 @@ class ETL_VPCK50(ETL_jp_disaster):
                     Title,  # 電文の種別を示すための情報名称
                     ReportDateTime,  # 発表時刻
                     TargetDateTime,  # 基点時刻
+                    MeteorologicalInfos_type,  # 予報の項目
+                    Property_Type,  # 気象要素名
+                    kind,  # 気象要素名2
                     DateTime,  # 予報・観測の基点時刻
                     Name,  # 予報・観測時間の内容
                     Area_Name,  # 対象地域
-                    kind,  # 気象要素名
                     pobn,  # 平年より低い(少ない)確率
                     pon,  # 平年並の確率
                     poan,  # 平年より多い(多い)確率
+                    None,
+                    None,
                 ]
 
         # 3-3-2 TimeSeiresInfo 部
         # 時系列情報
         # [解説] 期間の定義(TimeDefines)、各期間ごとの予報内容(Item)を記載する
         # 暖候期予報・寒候期予報の場合は出現しない
-        TimeSeriesInfo = soup.find("TimeSeriesInfo")
+        TimeSeriesInfo = MeteorologicalInfos.find("TimeSeriesInfo")
 
         # 3-3-2-1 TimeDefines 部
         # 時系列の時刻定義群
@@ -234,8 +244,10 @@ class ETL_VPCK50(ETL_jp_disaster):
 
             # 3-3-2-2-1 Property 部
             # [解説]「3-3-1-4-1 Property 部」と同様
+            Property_Type = Item.find("Property").find("Type").text
+
             if (
-                Item.find("Type").text
+                Property_Type
                 == "出現の可能性が最も大きい天候と、特徴のある気温、降水量等の確率"
             ):
                 pass  # 資料是文字，內容與"地域・期間平均平年偏差各階級の確率"重複
@@ -276,7 +288,7 @@ class ETL_VPCK50(ETL_jp_disaster):
 
             # 3-3-2-3-1 Property 部
             # [解説] 「3-3-1-5-1 Property」と同様
-            elif Item.find("Type").text == "地域・期間平均平年偏差各階級の確率":
+            elif Property_Type == "地域・期間平均平年偏差各階級の確率":
 
                 # 3-3-2-3-1-1 ClimateProbabilityValuesPart
                 # [解説] 3-3-1-5-1-1 「ClimateProbabilityValuesPart」と同様
@@ -331,13 +343,17 @@ class ETL_VPCK50(ETL_jp_disaster):
                         Title,  # 電文の種別を示すための情報名称
                         ReportDateTime,  # 発表時刻
                         TargetDateTime,  # 基点時刻
+                        MeteorologicalInfos_type,  # 予報の項目
+                        Property_Type,  # 気象要素名
+                        kind,  # 気象要素名2
                         TimeDefine_DateTime,  # 予報・観測の基点時刻
                         TimeDefine_Name,  # 予報・観測時間の内容
                         Area_Name,  # 対象地域
-                        kind,  # 気象要素名
                         pobn,  # 平年より低い(少ない)確率
                         pon,  # 平年並の確率
                         poan,  # 平年より多い(多い)確率
+                        None,
+                        None,
                     ]
 
         return df

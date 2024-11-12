@@ -52,9 +52,11 @@ class ETL_VPCK70(ETL_jp_disaster):
         # 属性 type は“区域予報”、“地点予報”の値をとる。
         # “区域予報”の場合は、地域平均気温(2内容部の個別要素の詳細※1参照)、
         MeteorologicalInfos_1 = soup.find("MeteorologicalInfos", type="区域予報")
+        MeteorologicalInfos_1_type = MeteorologicalInfos_1.get("type")
 
         # “地点予報”の場合は、最高気温・最低気温に関する情報(2内容部の個別要素の詳細※2参照)を記述する。
         MeteorologicalInfos_2 = soup.find("MeteorologicalInfos", type="地点予報")
+        MeteorologicalInfos_2_type = MeteorologicalInfos_2.get("type")
 
         # └ TimeSeriesInfo
 
@@ -121,6 +123,8 @@ class ETL_VPCK70(ETL_jp_disaster):
                 # └ Kind 予報を記述する。
                 #     └ Property 予報要素を記述する。
                 #         └ Type 気象要素名を記述する。「地域平均気温」
+                Property_Type = Item.find("Property").find("Type").text
+
                 #         └ ClimateValuesPart 期間平均・地域平均気温の平年偏差階級を記述する。
                 ClimateValuesPart = Item.find("ClimateValuesPart")
                 # cvp_type = ClimateValuesPart.get("type")
@@ -146,10 +150,15 @@ class ETL_VPCK70(ETL_jp_disaster):
                         Title,  # 情報名称
                         ReportDateTime,  # 発表時刻
                         TargetDateTime,  # 基点時刻
-                        Area_Name,  # 対象地域の名称
-                        compare_type,  # 気象要素名
+                        MeteorologicalInfos_1_type,  # 予報の項目
+                        Property_Type,  # 気象要素名
+                        compare_type,  # 気象要素名2
                         DateTime,  # 予報対象基点時刻
                         Name,  # 対象期間の内容
+                        Area_Name,  # 対象地域の名称
+                        None,
+                        None,
+                        None,
                         description,  # 期間平均・地域平均気温の平年偏差階級
                         None,  # value,  # 予想気温の内容を期間平均値  ## 和description 重複
                     ]
@@ -222,12 +231,14 @@ class ETL_VPCK70(ETL_jp_disaster):
                 #     └ Property 予報要素を記述する。
                 property_all = Kind.find_all("Property")
 
-                #         └ Type 気象要素名を記述する。ClimateValuesPart に記述する予想気温の内容を示し“最低気温”、
-                #                 “最低気温予測範囲”、“最低気温階級”、“最高気温”、“最高気温予測範囲”、“最高気温階級”の値をとる。
-                for property_ in property_all:
+                for Property in property_all:
+
+                    #     └ Type 気象要素名を記述する。ClimateValuesPart に記述する予想気温の内容を示し“最低気温”、
+                    #             “最低気温予測範囲”、“最低気温階級”、“最高気温”、“最高気温予測範囲”、“最高気温階級”の値をとる。
+                    Property_Type = Property.find("Type").text
 
                     #     └ ClimateValuesPart 気温に関して記述する。
-                    ClimateValuesPart = property_.find("ClimateValuesPart")
+                    ClimateValuesPart = Property.find("ClimateValuesPart")
 
                     # cvp_type = ClimateValuesPart.get("type")
 
@@ -258,10 +269,15 @@ class ETL_VPCK70(ETL_jp_disaster):
                                 Title,  # 情報名称
                                 ReportDateTime,  # 発表時刻
                                 TargetDateTime,  # 基点時刻
-                                Station_Name,  # 対象地域の名称
-                                temperature_type,  # 気象要素名
+                                MeteorologicalInfos_2_type,  # 予報の項目
+                                Property_Type,  # 気象要素名
+                                temperature_type,  # 気象要素名2
                                 DateTime,  # 予報対象基点時刻
                                 Name,  # 対象期間の内容
+                                Station_Name,  # 対象地域の名称
+                                None,
+                                None,
+                                None,
                                 None,  # description,  # 期間平均・地域平均気温の平年偏差階級  ## 和Value重複
                                 value,  # 予想気温の内容を期間平均値
                             ]
@@ -290,10 +306,15 @@ class ETL_VPCK70(ETL_jp_disaster):
                                 Title,  # 情報名称
                                 ReportDateTime,  # 発表時刻
                                 TargetDateTime,  # 基点時刻
-                                Station_Name,  # 対象地域の名称
-                                compare_type,  # 気象要素名
+                                MeteorologicalInfos_2_type,  # 予報の項目
+                                Property_Type,  # 気象要素名
+                                compare_type,  # 気象要素名2
                                 DateTime,  # 予報対象基点時刻
                                 Name,  # 対象期間の内容
+                                Station_Name,  # 対象地域の名称
+                                None,
+                                None,
+                                None,
                                 description,  # 期間平均・地域平均気温の平年偏差階級
                                 None,  # value,  # 予想気温の内容を期間平均値  ## 和description重複
                             ]
