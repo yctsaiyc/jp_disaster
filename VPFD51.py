@@ -22,10 +22,22 @@ class ETL_VPFD51(ETL_jp_disaster):
                     "value": jmx.text,
                 }
 
-        if detail == "WindForecastPart":
+        elif detail == "WindForecastPart":
             for WindForecast in DetailForecast.find_all("WindForecastPart"):
                 refID = WindForecast.get("refID")
                 jmx = WindForecast.find("jmx_eb:WindDirection")
+
+                DetailForecast_dict[refID] = {
+                    "DateTime": DateTime_dict[refID],
+                    "Name": Name_dict[refID],
+                    "type": jmx.get("type"),
+                    "value": jmx.text,
+                }
+
+        elif detail == "WaveHeightForecastPart":
+            for WaveHeightForecast in DetailForecast.find_all("WaveHeightForecastPart"):
+                refID = WaveHeightForecast.get("refID")
+                jmx = WaveHeightForecast.find("jmx_eb:WaveHeight")
 
                 DetailForecast_dict[refID] = {
                     "DateTime": DateTime_dict[refID],
@@ -206,9 +218,9 @@ class ETL_VPFD51(ETL_jp_disaster):
 
                         # └ DetailForecast 予報文を記述する。※1(1)-1-2
                         DetailForecast = Property.find("DetailForecast")
-                        self.parse_DetailForecast(
+                        DetailForecast_dict = self.parse_DetailForecast(
                             DetailForecast,
-                            "WeatherForecastPart",
+                            "WindForecastPart",
                             DateTime_dict,
                             Name_dict,
                         )
@@ -221,8 +233,11 @@ class ETL_VPFD51(ETL_jp_disaster):
 
                         # └ DetailForecast 予報文を記述する。※1(1)-1-3参照。
                         DetailForecast = Property.find("DetailForecast")
-                        self.parse_DetailForecast(
-                            DetailForecast, "", DateTime_dict, Name_dict
+                        DetailForecast_dict = self.parse_DetailForecast(
+                            DetailForecast,
+                            "WaveHeightForecastPart",
+                            DateTime_dict,
+                            Name_dict,
                         )
 
                     # └ Area 発表予報区を記述する。
