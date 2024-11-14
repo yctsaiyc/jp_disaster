@@ -46,6 +46,17 @@ class ETL_VPFD51(ETL_jp_disaster):
                     "value": jmx.text,
                 }
 
+        elif detail == "ProbabilityOfPrecipitationPart":
+            for jmx in DetailForecast.find_all("jmx_eb:ProbabilityOfPrecipitation"):
+                refID = jmx.get("refID")
+
+                DetailForecast_dict[refID] = {
+                    "DateTime": DateTime_dict[refID],
+                    "Name": Name_dict[refID],
+                    "type": jmx.get("type"),
+                    "value": jmx.text,
+                }
+
         return DetailForecast_dict
 
     def xml_to_df(self, xml_path, soup):
@@ -104,179 +115,195 @@ class ETL_VPFD51(ETL_jp_disaster):
 
             # └ TimeSeriesInfo
             # MeteorologicalInfos の属性 type で指定した予報の項目を時系列情報として記述する。
-            TimeSeriesInfo = MeteorologicalInfos.find("TimeSeriesInfo")
+            TimeSeriesInfo_all = MeteorologicalInfos.find_all("TimeSeriesInfo")
 
-            if not TimeSeriesInfo:
+            if not TimeSeriesInfo_all:
                 print(MeteorologicalInfos_type)
                 continue
 
-            # └ MeteorologicalInfo
-            # MeteorologicalInfos の属性 type で指定した予報の項目を記述する。
-            MeteorologicalInfo = MeteorologicalInfos.find("MeteorologicalInfo")
+            for TimeSeriesInfo in TimeSeriesInfo_all:
 
-            # 3個別要素の詳細
-            # ※1(1) 区域予報「天気予報文」の詳細
-            # TimeSeriesInfo 時系列情報
-            # └ TimeDefines 時系列の時刻定義セット
-            # └ TimeDefine 個々の時刻定義
-            # └ DateTime 基点時刻
-            # └ Duration 対象期間
-            # └ Name 予報時間の内容
-            # └ Item ※1(1)-1 「天気・風・波予報」の詳細を参照
+                # └ MeteorologicalInfo
+                # MeteorologicalInfos の属性 type で指定した予報の項目を記述する。
+                MeteorologicalInfo = MeteorologicalInfos.find("MeteorologicalInfo")
 
-            # TimeSeriesInfo
-            # └ TimeDefines
-            # 予報の対象期間を示すとともに、対応する要素の timeId を記述する。
-            TimeDefines = TimeSeriesInfo.find("TimeDefines")
+                # 3個別要素の詳細
+                # ※1(1) 区域予報「天気予報文」の詳細
+                # TimeSeriesInfo 時系列情報
+                # └ TimeDefines 時系列の時刻定義セット
+                # └ TimeDefine 個々の時刻定義
+                # └ DateTime 基点時刻
+                # └ Duration 対象期間
+                # └ Name 予報時間の内容
+                # └ Item ※1(1)-1 「天気・風・波予報」の詳細を参照
 
-            #     └ TimeDefine
-            #     同一 TimeSeriesInfo 内にある要素の ID(refID)に対応する ID(timeId)を記述する。
-            #     ID は 1、2 または 1~3。ID で示す、予報対象数と同数を繰り返して記述する。
-            TimeDefine_all = TimeDefines.find_all("TimeDefine")
-            DateTime_dict = {}
-            Name_dict = {}
+                # TimeSeriesInfo
+                # └ TimeDefines
+                # 予報の対象期間を示すとともに、対応する要素の timeId を記述する。
+                TimeDefines = TimeSeriesInfo.find("TimeDefines")
 
-            for TimeDefine in TimeDefine_all:
-                timeId = TimeDefine.get("timeId")
+                #     └ TimeDefine
+                #     同一 TimeSeriesInfo 内にある要素の ID(refID)に対応する ID(timeId)を記述する。
+                #     ID は 1、2 または 1~3。ID で示す、予報対象数と同数を繰り返して記述する。
+                TimeDefine_all = TimeDefines.find_all("TimeDefine")
+                DateTime_dict = {}
+                Name_dict = {}
 
-                #     └ DateTime
-                #     予報期間の始めの時刻を示す。“2008-01-10T05:00:00+09:00”のように日本標準時で記述する。
-                DateTime_dict[timeId] = self.format_datetime(
-                    TimeDefine.find("DateTime").text
-                )
+                for TimeDefine in TimeDefine_all:
+                    timeId = TimeDefine.get("timeId")
 
-                #     └ Duration
-                #     予報期間の長さを示す。“PT19H”“PT1D”など今日予報は24時までの長さ(時間)、明日予報と明後日予報は1日で記述する。
+                    #     └ DateTime
+                    #     予報期間の始めの時刻を示す。“2008-01-10T05:00:00+09:00”のように日本標準時で記述する。
+                    DateTime_dict[timeId] = self.format_datetime(
+                        TimeDefine.find("DateTime").text
+                    )
 
-                #     └ Name
-                #     予報の対象日を“今日”、“明日”、“明後日”のいずれかで記述する。
-                #     発表する時刻によって“今日”は “今夜”とする場合がある。また、“明後日”がないことがある。
-                name = TimeDefine.find("Name")
+                    #     └ Duration
+                    #     予報期間の長さを示す。“PT19H”“PT1D”など今日予報は24時までの長さ(時間)、明日予報と明後日予報は1日で記述する。
 
-                if name:
-                    Name_dict[timeId] = name.text
+                    #     └ Name
+                    #     予報の対象日を“今日”、“明日”、“明後日”のいずれかで記述する。
+                    #     発表する時刻によって“今日”は “今夜”とする場合がある。また、“明後日”がないことがある。
+                    name = TimeDefine.find("Name")
 
-            # └ Item
-            # 天気、風、波予報と、予報区を記述する。
-            # 府県予報区に含まれる発表予報区の数だけ繰り返す。※1(1)-1参照。
-            Item_all = TimeSeriesInfo.find_all("Item")
+                    if name:
+                        Name_dict[timeId] = name.text
 
-            for Item in Item_all:
-                # ※1(1)-1 「天気・風・波予報」の詳細
-                # Item 予報の内容
-                # └ Kind 個々の予報の内容
-                # └ Property 予報要素
-                # └ Type 気象要素名(“天気”の場合)
-                # └ DetailForecast ※1(1)-1-1(1) 「天気予報文」の詳細を参照
-                # └ WeatherPart ※1(1)-1-1(2) 「テロップ用天気予報用語の天気」の詳細を参照
-                # └ WeatherCodePart ※1(1)-1-1(3) 「天気予報用テロップ番号」の詳細を参照
-                # └ Kind 個々の予報の内容
-                # └ Property 予報要素
-                # └ Type 気象要素名(“風”の場合)
-                # └ DetailForecast ※1(1)-1-2 「風の予報文」の詳細を参照
-                # └ Kind 個々の予報の内容
-                # └ Property 予報要素
-                # └ Type 気象要素名(“波”の場合)
-                # └ DetailForecast ※1(1)-1-3 「波の予報文」の詳細を参照
-                # └ Area 対象地域
-                # └ Name 対象地域の名称
-                # └ Code 対象地域のコード
-                try:
-                    Area_Name = Item.find("Area").find("Name").text
-                except:
-                    Area_Name = Item.find("Station").find("Name").text
+                # └ Item
+                # 天気、風、波予報と、予報区を記述する。
+                # 府県予報区に含まれる発表予報区の数だけ繰り返す。※1(1)-1参照。
+                Item_all = TimeSeriesInfo.find_all("Item")
 
-                # Item
-                # └ Kind 予報を記述する。
-                Kind_all = Item.find_all("Kind")
+                for Item in Item_all:
+                    # ※1(1)-1 「天気・風・波予報」の詳細
+                    # Item 予報の内容
+                    # └ Kind 個々の予報の内容
+                    # └ Property 予報要素
+                    # └ Type 気象要素名(“天気”の場合)
+                    # └ DetailForecast ※1(1)-1-1(1) 「天気予報文」の詳細を参照
+                    # └ WeatherPart ※1(1)-1-1(2) 「テロップ用天気予報用語の天気」の詳細を参照
+                    # └ WeatherCodePart ※1(1)-1-1(3) 「天気予報用テロップ番号」の詳細を参照
+                    # └ Kind 個々の予報の内容
+                    # └ Property 予報要素
+                    # └ Type 気象要素名(“風”の場合)
+                    # └ DetailForecast ※1(1)-1-2 「風の予報文」の詳細を参照
+                    # └ Kind 個々の予報の内容
+                    # └ Property 予報要素
+                    # └ Type 気象要素名(“波”の場合)
+                    # └ DetailForecast ※1(1)-1-3 「波の予報文」の詳細を参照
+                    # └ Area 対象地域
+                    # └ Name 対象地域の名称
+                    # └ Code 対象地域のコード
+                    try:
+                        Area_Name = Item.find("Area").find("Name").text
 
-                for Kind in Kind_all:
-                    # └ Property 予報要素を記述する。
-                    Property = Kind.find("Property")
+                    except:
+                        Area_Name = Item.find("Station").find("Name").text
 
-                    #     └ Type 気象要素名を記述する。Type の値が“天気”の場合は天気予報文を記述する。
-                    Property_Type = Property.find("Type").text
-
-                    #     └ DetailForecast 予報文を記述する。※1(1)-1-1(1)参照。
-                    DetailForecast_dict = {}
-
-                    if Property_Type == "天気":
-                        ## DetailForecast資訊和WeatherPart重複故不採用
-
-                        # └ WeatherPart テロップ用天気予報用語の天気を記述する。※1(1)-1-1(2)参照。
-                        WeatherPart = Property.find("WeatherPart")
-                        DetailForecast_dict = self.parse_DetailForecast(
-                            WeatherPart, "WeatherPart", DateTime_dict, Name_dict
-                        )
-
-                        # └ WeatherCodePart 天気予報用テロップ番号を記述する。※1(1)-1-1(3)参照。
-
+                    # Item
                     # └ Kind 予報を記述する。
-                    # └ Property 予報要素を記述する。
-                    #     └ Type 気象要素名を記述する。Type の値が“風”の場合は DetailForecast に風の予報を記述する。
-                    elif Property_Type == "風":
+                    Kind_all = Item.find_all("Kind")
 
-                        # └ DetailForecast 予報文を記述する。※1(1)-1-2
-                        DetailForecast = Property.find("DetailForecast")
-                        DetailForecast_dict = self.parse_DetailForecast(
-                            DetailForecast,
-                            "WindForecastPart",
-                            DateTime_dict,
-                            Name_dict,
-                        )
+                    for Kind in Kind_all:
+                        # └ Property 予報要素を記述する。
+                        Property = Kind.find("Property")
 
-                    # └ Kind 予報を記述する。
-                    # └ Property 予報要素を記述する。
-                    #     └ Type 気象要素名を記述する。Type の値が“波”の場合は DetailForecast に波の予報を記述する。
-                    #             なお、波予報を行っていない発表予報区では Kind 以下を省略する。
-                    elif Property_Type == "波":
+                        #     └ Type 気象要素名を記述する。Type の値が“天気”の場合は天気予報文を記述する。
+                        Property_Type = Property.find("Type").text
 
-                        # └ DetailForecast 予報文を記述する。※1(1)-1-3参照。
-                        DetailForecast = Property.find("DetailForecast")
-                        DetailForecast_dict = self.parse_DetailForecast(
-                            DetailForecast,
-                            "WaveHeightForecastPart",
-                            DateTime_dict,
-                            Name_dict,
-                        )
+                        #     └ DetailForecast 予報文を記述する。※1(1)-1-1(1)参照。
+                        DetailForecast_dict = {}
 
-                    # └ Area 発表予報区を記述する。
-                    # └ Name 発表予報区の名称を、“東京地方”“大阪府”などと記述する。
-                    # └ Code 発表予報区のコード番号を、“130010”“270000”などと記述する。
+                        if Property_Type == "天気":
+                            ## DetailForecast資訊和WeatherPart重複故不採用
 
-                    for row in DetailForecast_dict.values():
-                        df.loc[len(df)] = [
-                            Title,  # 情報名称
-                            ReportDateTime,  # 発表時刻
-                            TargetDateTime,  # 基点時刻
-                            MeteorologicalInfos_type,  # 予報の項目
-                            Area_Name,  # 対象地域
-                            Property_Type,  # 気象要素名
-                            row["DateTime"],  # 予報期間の始めの時刻
-                            row["Name"],  # 予報の対象日
-                            row["type"],  # type
-                            row["value"],  # value
-                        ]
+                            # └ WeatherPart テロップ用天気予報用語の天気を記述する。※1(1)-1-1(2)参照。
+                            WeatherPart = Property.find("WeatherPart")
+                            DetailForecast_dict = self.parse_DetailForecast(
+                                WeatherPart, "WeatherPart", DateTime_dict, Name_dict
+                            )
 
-                # ※1(2)-1 「降水確率」の詳細
-                # Item 予報の内容
-                # └ Kind 個々の予報の内容
-                # └ Property 予報要素
-                # └ Type 気象要素名
-                # └ ProbabilityOfPrecipitationPart ※1(2)-1-1 「降水確率」の予報文の詳細を参照
-                # └ Area 対象地域
-                # └ Name 対象地域の名称
-                # └ Code 対象地域のコード
-                #
-                # Item
-                # └ Kind 予報を記述する。
-                # └ Property 予報要素を記述する。
-                # └ Type 気象要素名を記述する。Type の値が“降水確率”の場合、降水確率の予報を記述する。
-                # └ ProbabilityOfPrecipitationPart 降水確率(数値)と降水指示符を記述する。※1(2)-1-1参照。
-                # └ Area 発表予報区を記述する。
-                # └ Name 発表予報区の名称を、“東京地方”“大阪府”などと記述する。
-                # └ Code 発表予報区のコード番号を、“130010”“270000”などと記述する。
-            #
+                            # └ WeatherCodePart 天気予報用テロップ番号を記述する。※1(1)-1-1(3)参照。
+
+                        # └ Kind 予報を記述する。
+                        # └ Property 予報要素を記述する。
+                        #     └ Type 気象要素名を記述する。Type の値が“風”の場合は DetailForecast に風の予報を記述する。
+                        elif Property_Type == "風":
+
+                            # └ DetailForecast 予報文を記述する。※1(1)-1-2
+                            DetailForecast = Property.find("DetailForecast")
+                            DetailForecast_dict = self.parse_DetailForecast(
+                                DetailForecast,
+                                "WindForecastPart",
+                                DateTime_dict,
+                                Name_dict,
+                            )
+
+                        # └ Kind 予報を記述する。
+                        # └ Property 予報要素を記述する。
+                        #     └ Type 気象要素名を記述する。Type の値が“波”の場合は DetailForecast に波の予報を記述する。
+                        #             なお、波予報を行っていない発表予報区では Kind 以下を省略する。
+                        elif Property_Type == "波":
+
+                            # └ DetailForecast 予報文を記述する。※1(1)-1-3参照。
+                            DetailForecast = Property.find("DetailForecast")
+                            DetailForecast_dict = self.parse_DetailForecast(
+                                DetailForecast,
+                                "WaveHeightForecastPart",
+                                DateTime_dict,
+                                Name_dict,
+                            )
+
+                        # └ Area 発表予報区を記述する。
+                        # └ Name 発表予報区の名称を、“東京地方”“大阪府”などと記述する。
+                        # └ Code 発表予報区のコード番号を、“130010”“270000”などと記述する。
+
+                        # ※1(2)-1 「降水確率」の詳細
+                        # Item 予報の内容
+                        # └ Kind 個々の予報の内容
+                        # └ Property 予報要素
+                        #     └ Type 気象要素名
+                        #     └ ProbabilityOfPrecipitationPart ※1(2)-1-1 「降水確率」の予報文の詳細を参照
+                        # └ Area 対象地域
+                        # └ Name 対象地域の名称
+                        # └ Code 対象地域のコード
+                        #
+                        # Item
+                        # └ Kind 予報を記述する。
+                        # └ Property 予報要素を記述する。
+                        # └     Type 気象要素名を記述する。Type の値が“降水確率”の場合、降水確率の予報を記述する。
+                        elif Property_Type == "降水確率":
+
+                            # └ ProbabilityOfPrecipitationPart 降水確率(数値)と降水指示符を記述する。※1(2)-1-1参照。
+                            ProbabilityOfPrecipitationPart = Property.find(
+                                "ProbabilityOfPrecipitationPart"
+                            )
+
+                            DetailForecast_dict = self.parse_DetailForecast(
+                                ProbabilityOfPrecipitationPart,
+                                "ProbabilityOfPrecipitationPart",
+                                DateTime_dict,
+                                Name_dict,
+                            )
+
+                            # └ Area 発表予報区を記述する。
+                            # └ Name 発表予報区の名称を、“東京地方”“大阪府”などと記述する。
+                            # └ Code 発表予報区のコード番号を、“130010”“270000”などと記述する。
+
+                        for row in DetailForecast_dict.values():
+                            df.loc[len(df)] = [
+                                Title,  # 情報名称
+                                ReportDateTime,  # 発表時刻
+                                TargetDateTime,  # 基点時刻
+                                MeteorologicalInfos_type,  # 予報の項目
+                                Area_Name,  # 対象地域
+                                Property_Type,  # 気象要素名
+                                row["DateTime"],  # 予報期間の始めの時刻
+                                row["Name"],  # 予報の対象日
+                                row["type"],  # type
+                                row["value"],  # value
+                            ]
+
             # ※2 地点予報「予想気温」の詳細
             # TimeSeriesInfo 時系列情報
             # └ TimeDefines 時系列の時刻定義セット
