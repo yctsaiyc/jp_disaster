@@ -16,8 +16,8 @@ class ETL_VPFD51(ETL_jp_disaster):
                 refID = jmx.get("refID")
 
                 DetailForecast_dict[refID] = {
-                    "DateTime": DateTime_dict[refID],
-                    "Name": Name_dict[refID],
+                    "DateTime": DateTime_dict.get(refID),
+                    "Name": Name_dict.get(refID),
                     "type": jmx.get("type"),
                     "value": jmx.text,
                 }
@@ -28,8 +28,8 @@ class ETL_VPFD51(ETL_jp_disaster):
                 jmx = WindForecast.find("jmx_eb:WindDirection")
 
                 DetailForecast_dict[refID] = {
-                    "DateTime": DateTime_dict[refID],
-                    "Name": Name_dict[refID],
+                    "DateTime": DateTime_dict.get(refID),
+                    "Name": Name_dict.get(refID),
                     "type": jmx.get("type"),
                     "value": jmx.text,
                 }
@@ -40,8 +40,8 @@ class ETL_VPFD51(ETL_jp_disaster):
                 jmx = WaveHeightForecast.find("jmx_eb:WaveHeight")
 
                 DetailForecast_dict[refID] = {
-                    "DateTime": DateTime_dict[refID],
-                    "Name": Name_dict[refID],
+                    "DateTime": DateTime_dict.get(refID),
+                    "Name": Name_dict.get(refID),
                     "type": jmx.get("type"),
                     "value": jmx.text,
                 }
@@ -51,8 +51,8 @@ class ETL_VPFD51(ETL_jp_disaster):
                 refID = jmx.get("refID")
 
                 DetailForecast_dict[refID] = {
-                    "DateTime": DateTime_dict[refID],
-                    "Name": Name_dict[refID],
+                    "DateTime": DateTime_dict.get(refID),
+                    "Name": Name_dict.get(refID),
                     "type": jmx.get("type"),
                     "value": jmx.text,
                 }
@@ -62,11 +62,33 @@ class ETL_VPFD51(ETL_jp_disaster):
             refID = jmx.get("refID")
 
             DetailForecast_dict[refID] = {
-                "DateTime": DateTime_dict[refID],
-                "Name": Name_dict[refID],
+                "DateTime": DateTime_dict.get(refID),
+                "Name": Name_dict.get(refID),
                 "type": jmx.get("type"),
                 "value": jmx.text,
             }
+
+        elif detail == "WindDirectionPart":
+            for jmx in DetailForecast.find_all("jmx_eb:WindDirection"):
+                refID = jmx.get("refID")
+
+                DetailForecast_dict[refID] = {
+                    "DateTime": DateTime_dict.get(refID),
+                    "Name": Name_dict.get(refID),
+                    "type": jmx.get("type"),
+                    "value": jmx.text,
+                }
+
+        elif detail == "WindSpeedPart":
+            for jmx in DetailForecast.find_all("jmx_eb:WindSpeedLevel"):
+                refID = jmx.get("refID")
+
+                DetailForecast_dict[refID] = {
+                    "DateTime": DateTime_dict.get(refID),
+                    "Name": Name_dict.get(refID),
+                    "type": jmx.get("type"),
+                    "value": jmx.text,
+                }
 
         return DetailForecast_dict
 
@@ -369,79 +391,122 @@ class ETL_VPFD51(ETL_jp_disaster):
 
                                 # ※対象地点は府県天気予報・府県週間天気予報_解説資料付録を参照のこと
 
-                                # ※3 「独自予報」の詳細
-                                # MeteorologicalInfo
-                                # └ DateTime 予報の基点時刻
-                                # └ Duration 予報期間の長さ
-                                # └ Item 予報の内容
-                                # └ Kind 個々の予報の内容
-                                # └ Property 予報要素
-                                # └ Type 要素名
-                                # └ Text 予報の内容(テキスト)
-                                # └ Area 対象地域
-                                # └ Name 対象地域の名称
-                                # └ Code 対象地域のコード
+                            # ※3 「独自予報」の詳細
+                            # MeteorologicalInfo
+                            # └ DateTime 予報の基点時刻
+                            # └ Duration 予報期間の長さ
+                            # └ Item 予報の内容
+                            # └ Kind 個々の予報の内容
+                            # └ Property 予報要素
+                            # └ Type 要素名
+                            # └ Text 予報の内容(テキスト)
+                            # └ Area 対象地域
+                            # └ Name 対象地域の名称
+                            # └ Code 対象地域のコード
 
-                                # MeteorologicalInfo
-                                # └ DateTime 予報期間の始めの時刻を示す。
-                                # “2008-01-10T05:00:00+09:00”のように日本標準時で記述する。
-                                # └ Duration 予報期間の長さを示す。
-                                # “P1DT19H”のように予報期間の始めの時刻から明日もしくは明後日24時までの長さを記述する。
+                            # MeteorologicalInfo
+                            # └ DateTime 予報期間の始めの時刻を示す。
+                            # “2008-01-10T05:00:00+09:00”のように日本標準時で記述する。
+                            # └ Duration 予報期間の長さを示す。
+                            # “P1DT19H”のように予報期間の始めの時刻から明日もしくは明後日24時までの長さを記述する。
 
-                                # └ Item
-                                # └ Kind 予報を記述する。
-                                # └ Property 予報要素を記述する。
-                                # └ Type 気象要素名を記述する。Type の値が、“独自予報”の場合は、独自予報を記述する。
-                                # └ Text 独自予報文を平文(かな漢字)で記述する。
-                                # └ Area 発表予報区(府県予報区)を記述する。“独自予報”の発表単位は府県予報区とする。
-                                # └ Name 府県予報区の名称を、“神奈川県”などと記述する。
-                                # └ Code 府県予報区のコード番号を、“140000”などと記述する。
+                            # └ Item
+                            # └ Kind 予報を記述する。
+                            # └ Property 予報要素を記述する。
+                            # └ Type 気象要素名を記述する。Type の値が、“独自予報”の場合は、独自予報を記述する。
+                            # └ Text 独自予報文を平文(かな漢字)で記述する。
+                            # └ Area 発表予報区(府県予報区)を記述する。“独自予報”の発表単位は府県予報区とする。
+                            # └ Name 府県予報区の名称を、“神奈川県”などと記述する。
+                            # └ Code 府県予報区のコード番号を、“140000”などと記述する。
 
-                                # ※4 区域予報「天気、風の地域時系列予報」の詳細
-                                # TimeSeriesInfo 時系列情報
-                                # └ TimeDefines 時系列の時刻定義セット
-                                # └ TimeDefine 個々の時刻定義
-                                # └ DateTime 基点時刻
-                                # └ Duration 対象期間
-                                # └ Item 予報時間の内容 ※4-1 「天気、風の地域時系列予報」の詳細を参照
+                            # ※4 区域予報「天気、風の地域時系列予報」の詳細
+                            # TimeSeriesInfo 時系列情報
+                            # └ TimeDefines 時系列の時刻定義セット
+                            # └ TimeDefine 個々の時刻定義
+                            # └ DateTime 基点時刻
+                            # └ Duration 対象期間
+                            # └ Item 予報時間の内容 ※4-1 「天気、風の地域時系列予報」の詳細を参照
 
-                                # TimeSeriesInfo
-                                # └ TimeDefines 予報の対象期間を示すとともに、対応する要素の timeId を記述する。
-                                # └ TimeDefine 同一 TimeSeriesInfo 内にある要素の ID(refID)に対応する ID(timeId)を記述する。
-                                # ID は 1~10、1~12、1~14。ID で示す、予報対象数と同数(10回、12回、14回)を繰り返して記述する。
-                                # └ DateTime 予報期間の始めの時刻を示す。“2008-01-10T05:00:00+09:00”のように日本標準時で記述する。
-                                # └ Duration 予報期間の長さを示す。“PT3H”のように3時間固定で記述する。
-                                # └ Item 天気、風の地域時系列予報と、予報区を記述する。
-                                # 府県予報区に含まれる発表予報区の数だけ繰り返す。
-                                # ※4-1参照。
+                            # TimeSeriesInfo
+                            # └ TimeDefines 予報の対象期間を示すとともに、対応する要素の timeId を記述する。
+                            # └ TimeDefine 同一 TimeSeriesInfo 内にある要素の ID(refID)に対応する ID(timeId)を記述する。
+                            # ID は 1~10、1~12、1~14。ID で示す、予報対象数と同数(10回、12回、14回)を繰り返して記述する。
+                            # └ DateTime 予報期間の始めの時刻を示す。“2008-01-10T05:00:00+09:00”のように日本標準時で記述する。
+                            # └ Duration 予報期間の長さを示す。“PT3H”のように3時間固定で記述する。
+                            # └ Item 天気、風の地域時系列予報と、予報区を記述する。
+                            # 府県予報区に含まれる発表予報区の数だけ繰り返す。
+                            # ※4-1参照。
 
-                                # ※4-1 「天気、風の地域時系列予報」の詳細
-                                # Item 予報の内容
-                                # └ Kind 個々の予報の内容
-                                # └ Property 予報要素
-                                # └ Type 気象要素名
-                                # └ WeatherPart ※4-1-1(1) 「3時間内卓越天気」の詳細を参照
-                                # └ Kind 個々の予報の内容
-                                # └ Property 予報要素
-                                # └ Type 気象要素名
-                                # └ WindDirectionPart ※4-1-1(2) 「3時間内代表風の風向」の詳細を参照
-                                # └ WindSpeedPart ※4-1-1(3) 「3時間内代表風の風速階級」の詳細を参照
-                                # └ Area 対象地域
-                                # └ Name 対象地域の名称
-                                # └ Code 対象地域のコード
+                            # ※4-1 「天気、風の地域時系列予報」の詳細
+                            # Item 予報の内容
+                            # └ Kind 個々の予報の内容
+                            # └ Property 予報要素
+                            # └ Type 気象要素名
+                            # └ WeatherPart ※4-1-1(1) 「3時間内卓越天気」の詳細を参照
+                            # └ Kind 個々の予報の内容
+                            # └ Property 予報要素
+                            # └ Type 気象要素名
+                            # └ WindDirectionPart ※4-1-1(2) 「3時間内代表風の風向」の詳細を参照
+                            # └ WindSpeedPart ※4-1-1(3) 「3時間内代表風の風速階級」の詳細を参照
+                            # └ Area 対象地域
+                            # └ Name 対象地域の名称
+                            # └ Code 対象地域のコード
 
-                                # Item
-                                # └ Kind 予報を記述する。
-                                # └ Property 予報要素を記述する。
-                                # └ Type 気象要素名を記述する。
-                                # Type が“3時間内卓越天気”の場合、WeatherPart に3時間内卓越天気の予報を記述する。
+                            # Item
+                            # └ Kind 予報を記述する。
+                            # └ Property 予報要素を記述する。
+                            # └ Type 気象要素名を記述する。
+                            # Type が“3時間内卓越天気”の場合、WeatherPart に3時間内卓越天気の予報を記述する。
+                            elif Property_Type == "３時間内卓越天気":
                                 # └ WeatherPart 天気を記述する。※4-1-1(1) 「3時間内卓越天気」の詳細を参照。
-                                # └ Kind 予報を記述する。
-                                # └ Property 予報要素を記述する。
-                                # └ Type 気象要素名を記述する。
-                                # Type が“3時間内代表風”の場合、WindDirectionPart、WindSpeedPart に3時間内代表風の予報を記述する。
+                                WeatherPart = Property.find("WeatherPart")
+
+                                DetailForecast_dict = self.parse_DetailForecast(
+                                    WeatherPart,
+                                    "WeatherPart",
+                                    DateTime_dict,
+                                    Name_dict,
+                                )
+
+                            # └ Kind 予報を記述する。
+                            # └ Property 予報要素を記述する。
+                            # └ Type 気象要素名を記述する。
+                            # Type が“3時間内代表風”の場合、WindDirectionPart、WindSpeedPart に3時間内代表風の予報を記述する。
+                            elif Property_Type == "３時間内代表風":
                                 # └ WindDirectionPart 風向を記述する。※4-1-1(2)参照。
+                                WindDirectionPart = Property.find("WindDirectionPart")
+
+                                DetailForecast_dict = self.parse_DetailForecast(
+                                    WindDirectionPart,
+                                    "WindDirectionPart",
+                                    DateTime_dict,
+                                    Name_dict,
+                                )
+
+                                for row in DetailForecast_dict.values():
+                                    df.loc[len(df)] = [
+                                        Title,  # 情報名称
+                                        ReportDateTime,  # 発表時刻
+                                        TargetDateTime,  # 基点時刻
+                                        MeteorologicalInfos_type,  # 予報の項目
+                                        Area_Name,  # 対象地域
+                                        Property_Type,  # 気象要素名
+                                        row["DateTime"],  # 予報期間の始めの時刻
+                                        row["Name"],  # 予報の対象日
+                                        row["type"],  # type
+                                        row["value"],  # value
+                                    ]
+
                                 # └ WindSpeedPart 風速(風速階級)を記述する。※4-1-1(3) 参照。
+                                WindSpeedPart = Property.find("WindSpeedPart")
+
+                                DetailForecast_dict = self.parse_DetailForecast(
+                                    WindSpeedPart,
+                                    "WindSpeedPart",
+                                    DateTime_dict,
+                                    Name_dict,
+                                )
+
                                 # └ Area 発表予報区を記述する。
                                 # └ Name 発表予報区の名称を、“東京地方”“大阪府”などと記述する。
                                 # └ Code 発表予報区のコード番号を、“130010”“270000”などと記述する。
