@@ -306,8 +306,9 @@ class ETL_VPFD51(ETL_jp_disaster):
 
         return data_dict
 
-    def xml_to_df(self, xml_path, soup):
-        df = pd.DataFrame(columns=self.columns)
+    def set_attrs(self, soup):
+        self.soup = soup
+        self.df = pd.DataFrame(columns=self.columns)
 
         # 2 各部の構成と内容
         # (1)管理部
@@ -343,6 +344,42 @@ class ETL_VPFD51(ETL_jp_disaster):
         # └ InfoKindVersion スキーマの運用種別情報のバージョン
         # └ Headline 見出し要素
 
+    def parse_time_defines(self, TimeSeriesInfo):
+        TimeDefines = TimeSeriesInfo.find("TimeDefines")
+        TimeDefine_all = TimeDefines.find_all("TimeDefine")
+        DateTime_dict = {}
+        Name_dict = {}
+
+        for TimeDefine in TimeDefine_all:
+            timeId = TimeDefine.get("timeId")
+
+            DateTime_dict[timeId] = self.format_datetime(
+                TimeDefine.find("DateTime").text
+            )
+
+            name = TimeDefine.find("Name")
+
+            if name:
+                Name_dict[timeId] = name.text
+
+    def f1(self, MeteorologicalInfos):
+        TimeSeriesInfo_all = MeteorologicalInfos.find_all("TimeSeriesInfo")
+
+        for TimeSeriesInfo in TimeSeriesInfo_all:
+            DateTime_dict, Name_dict = self.parse_time_defines(TimeSeriesInfo)
+
+    def f2(self, MeteorologicalInfos):
+        pass
+
+    def f4(self, MeteorologicalInfos):
+        pass
+
+    def f5(self, MeteorologicalInfos):
+        pass
+
+    def xml_to_df(self, xml_path, soup):
+        self.set_attrs(soup)
+
         # (3) 内容部
         # 1 内容部の構成
         # Body
@@ -357,27 +394,44 @@ class ETL_VPFD51(ETL_jp_disaster):
         for MeteorologicalInfos in MeteorologicalInfos_all:
 
             # 予報の項目を属性 type で指定する。属性 type は“区域予報”、“地点予報”、“独自予報”の値をとる。
-            # “区域予報”の場合は、天気予報文(3個別要素の詳細の※1参照)
-            # 又は地域時系列予報の天気・風(3個別要素の詳細の※4参照)、
-            # “地点予報”の場合は、予想気温(3個別要素の詳細の※2参照)
-            # 又は地域時系列予報の気温(3個別要素の詳細の※5参照)、
-            # “独自予報”の場合は、独自予報(3個別要素の詳細の※3参照)を記述する。
             MeteorologicalInfos_type = MeteorologicalInfos.get("type")
+
+            # “区域予報”の場合は、天気予報文(3個別要素の詳細の※1参照)
+            if MeteorologicalInfos_type == "区域予報":
+                if MeteorologicalInfos.find("TimeDefine").find("Name"):
+                    self.f1(MeteorologicalInfos)
+
+                # 又は地域時系列予報の天気・風(3個別要素の詳細の※4参照)、
+                else:
+                    self.f4(MeteorologicalInfos)
+
+            # “地点予報”の場合は、予想気温(3個別要素の詳細の※2参照)
+            elif MeteorologicalInfos_type == "地点予報":
+                if MeteorologicalInfos.find("TimeDefine").find("Name"):
+                    self.f2(MeteorologicalInfos)
+
+                # 又は地域時系列予報の気温(3個別要素の詳細の※5参照)、
+                else:
+                    self.f5(MeteorologicalInfos)
+
+            # “独自予報”の場合は、独自予報(3個別要素の詳細の※3参照)を記述する。
+            elif MeteorologicalInfos_type == "独自予報":
+                continue
+
+            else:
+                raise ValueError(f"Unknown type: {MeteorologicalInfos_type}")
 
             # └ TimeSeriesInfo
             # MeteorologicalInfos の属性 type で指定した予報の項目を時系列情報として記述する。
-            TimeSeriesInfo_all = MeteorologicalInfos.find_all("TimeSeriesInfo")
 
-            if not TimeSeriesInfo_all:  ## 独自予報
-                continue
+            # └ MeteorologicalInfo
+            # MeteorologicalInfos の属性 type で指定した予報の項目を記述する。
+            ## MeteorologicalInfo = MeteorologicalInfos.find("MeteorologicalInfo")  ## 独自予報
 
-            for TimeSeriesInfo in TimeSeriesInfo_all:
+            exit()
 
-                # └ MeteorologicalInfo
-                # MeteorologicalInfos の属性 type で指定した予報の項目を記述する。
-                ## MeteorologicalInfo = MeteorologicalInfos.find("MeteorologicalInfo")  ## 独自予報
-
-                # 3個別要素の詳細
+            # 3個別要素の詳細
+            if True:
                 # ※1(1) 区域予報「天気予報文」の詳細
                 # TimeSeriesInfo 時系列情報
                 # └ TimeDefines 時系列の時刻定義セット
@@ -390,34 +444,16 @@ class ETL_VPFD51(ETL_jp_disaster):
                 # TimeSeriesInfo
                 # └ TimeDefines
                 # 予報の対象期間を示すとともに、対応する要素の timeId を記述する。
-                TimeDefines = TimeSeriesInfo.find("TimeDefines")
-
                 #     └ TimeDefine
                 #     同一 TimeSeriesInfo 内にある要素の ID(refID)に対応する ID(timeId)を記述する。
                 #     ID は 1、2 または 1~3。ID で示す、予報対象数と同数を繰り返して記述する。
-                TimeDefine_all = TimeDefines.find_all("TimeDefine")
-                DateTime_dict = {}
-                Name_dict = {}
-
-                for TimeDefine in TimeDefine_all:
-                    timeId = TimeDefine.get("timeId")
-
-                    #     └ DateTime
-                    #     予報期間の始めの時刻を示す。“2008-01-10T05:00:00+09:00”のように日本標準時で記述する。
-                    DateTime_dict[timeId] = self.format_datetime(
-                        TimeDefine.find("DateTime").text
-                    )
-
-                    #     └ Duration
-                    #     予報期間の長さを示す。“PT19H”“PT1D”など今日予報は24時までの長さ(時間)、明日予報と明後日予報は1日で記述する。
-
-                    #     └ Name
-                    #     予報の対象日を“今日”、“明日”、“明後日”のいずれかで記述する。
-                    #     発表する時刻によって“今日”は “今夜”とする場合がある。また、“明後日”がないことがある。
-                    name = TimeDefine.find("Name")
-
-                    if name:
-                        Name_dict[timeId] = name.text
+                #         └ DateTime
+                #         予報期間の始めの時刻を示す。“2008-01-10T05:00:00+09:00”のように日本標準時で記述する。
+                #         └ Duration
+                #         予報期間の長さを示す。“PT19H”“PT1D”など今日予報は24時までの長さ(時間)、明日予報と明後日予報は1日で記述する。
+                #         └ Name
+                #         予報の対象日を“今日”、“明日”、“明後日”のいずれかで記述する。
+                #         発表する時刻によって“今日”は “今夜”とする場合がある。また、“明後日”がないことがある。
 
                 # └ Item
                 # 天気、風、波予報と、予報区を記述する。
