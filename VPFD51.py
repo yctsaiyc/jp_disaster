@@ -80,7 +80,7 @@ class ETL_VPFD51(ETL_jp_disaster):
                 }
 
         elif tag_name == "WindSpeedPart":
-            for jmx in xml.find_all("jmx_eb:WindSpeedLevel"):
+            for jmx in xml.find_all("WindSpeedLevel"):
                 refID = jmx.get("refID")
 
                 data_dict[refID] = {
@@ -111,6 +111,8 @@ class ETL_VPFD51(ETL_jp_disaster):
         # 1 ヘッダ部の構成
         # Head
         # └ Title 標題
+        prefecture = soup.find("Head").find("Title").text.replace("府県天気予報", "")
+
         # └ ReportDateTime 発表時刻
         ReportDateTime = self.format_datetime(soup.find("ReportDateTime").text)
 
@@ -489,6 +491,7 @@ class ETL_VPFD51(ETL_jp_disaster):
                                         ReportDateTime,  # 発表時刻
                                         TargetDateTime,  # 基点時刻
                                         MeteorologicalInfos_type,  # 予報の項目
+                                        prefecture,  # 都道府県
                                         Area_Name,  # 対象地域
                                         Property_Type,  # 気象要素名
                                         row["DateTime"],  # 予報期間の始めの時刻
@@ -561,6 +564,7 @@ class ETL_VPFD51(ETL_jp_disaster):
                                 print(
                                     f"Unexpected property type encountered: {Property_Type}"
                                 )
+
                                 raise
 
                             for row in data_dict.values():
@@ -569,6 +573,7 @@ class ETL_VPFD51(ETL_jp_disaster):
                                     ReportDateTime,  # 発表時刻
                                     TargetDateTime,  # 基点時刻
                                     MeteorologicalInfos_type,  # 予報の項目
+                                    prefecture,  # 都道府県
                                     Area_Name,  # 対象地域
                                     Property_Type,  # 気象要素名
                                     row["DateTime"],  # 予報期間の始めの時刻
