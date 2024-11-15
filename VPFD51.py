@@ -109,7 +109,7 @@ class ETL_VPFD51(ETL_jp_disaster):
                     "DateTime": DateTime_dict.get(refID),
                     "Name": Name_dict.get(refID),
                     "type": jmx.get("type"),
-                    "value": jmx.text,
+                    "weather": jmx.text,
                 }
 
         # ※1(1)-1-1(3) 「天気予報用テロップ番号」の詳細 (/Kind/Property/Type = 天気) /WeatherCodePart
@@ -152,7 +152,7 @@ class ETL_VPFD51(ETL_jp_disaster):
                     "DateTime": DateTime_dict.get(refID),
                     "Name": Name_dict.get(refID),
                     "type": jmx.get("type"),
-                    "value": jmx.text,
+                    "wind_direction": jmx.text,
                 }
 
         # ※1(1)-1-3 「波の予報文」の詳細(A) (/Kind/Property/Type = 波) /DetailForecast/WaveHeightForecastPart
@@ -173,7 +173,7 @@ class ETL_VPFD51(ETL_jp_disaster):
                     "DateTime": DateTime_dict.get(refID),
                     "Name": Name_dict.get(refID),
                     "type": jmx.get("type"),
-                    "value": jmx.text,
+                    "wave_height": jmx.text,
                 }
 
         # ※1(2)-1-1 「降水確率」の予報文の詳細 (/Kind/Property/Type = 降水確率) /ProbabilityOfPrecipitationPart
@@ -200,7 +200,7 @@ class ETL_VPFD51(ETL_jp_disaster):
                     "DateTime": DateTime_dict.get(refID),
                     "Name": Name_dict.get(refID),
                     "type": jmx.get("type"),
-                    "value": jmx.text,
+                    "precipitation": jmx.text,
                 }
 
         # ※2-1-1 「予想気温」の予報文の詳細 (/Kind/Property/Type = 日中の最高気温/最高気温/朝の最低気温) /TemperaturePart
@@ -231,7 +231,7 @@ class ETL_VPFD51(ETL_jp_disaster):
                     "DateTime": DateTime_dict.get(refID),
                     "Name": Name_dict.get(refID),
                     "type": jmx.get("type"),
-                    "value": jmx.text,
+                    "temperature": jmx.text,
                 }
 
         # ※4-1-1(2) 「3時間内代表風の風向」の詳細 (/Kind/Property/Type = 3時間内代表風) /WindDirectionPart
@@ -248,7 +248,7 @@ class ETL_VPFD51(ETL_jp_disaster):
                     "DateTime": DateTime_dict.get(refID),
                     "Name": Name_dict.get(refID),
                     "type": jmx.get("type"),
-                    "value": jmx.text,
+                    "wind_direction": jmx.text,
                 }
 
         # ※4-1-1(3) 「3時間内代表風の風速階級」の詳細 (/Kind/Property/Type = 3時間内代表風) /WindSpeedPart
@@ -267,7 +267,7 @@ class ETL_VPFD51(ETL_jp_disaster):
                     "DateTime": DateTime_dict.get(refID),
                     "Name": Name_dict.get(refID),
                     "type": jmx.get("type"),
-                    "value": jmx.text,
+                    "wind_speed": jmx.text,
                 }
 
         return data_dict
@@ -674,10 +674,15 @@ class ETL_VPFD51(ETL_jp_disaster):
                                         prefecture,  # 都道府県
                                         Area_Name,  # 対象地域
                                         Property_Type,  # 気象要素名
-                                        row["DateTime"],  # 予報期間の始めの時刻
-                                        row["Name"],  # 予報の対象日
-                                        row["type"],  # type
-                                        row["value"],  # value
+                                        row.get("DateTime"),  # 予報期間の始めの時刻
+                                        row.get("Name"),  # 予報の対象日
+                                        row.get("type"),  # 気象要素名2
+                                        row.get("weather"),  # 天気
+                                        row.get("wind_direction"),  # 風向
+                                        row.get("wind_speed"),  # 風速階級
+                                        row.get("precipitation"),  # 降水確率
+                                        row.get("temperature"),  # 気温
+                                        row.get("wave_height"),  # 波高
                                     ]
 
                                 # └ WindSpeedPart 風速(風速階級)を記述する。※4-1-1(3) 参照。
@@ -756,10 +761,15 @@ class ETL_VPFD51(ETL_jp_disaster):
                                     prefecture,  # 都道府県
                                     Area_Name,  # 対象地域
                                     Property_Type,  # 気象要素名
-                                    row["DateTime"],  # 予報期間の始めの時刻
-                                    row["Name"],  # 予報の対象日
-                                    row["type"],  # type
-                                    row["value"],  # value
+                                    row.get("DateTime"),  # 予報期間の始めの時刻
+                                    row.get("Name"),  # 予報の対象日
+                                    row.get("type"),  # 気象要素名2
+                                    row.get("weather"),  # 天気
+                                    row.get("wind_direction"),  # 風向
+                                    row.get("wind_speed"),  # 風速階級
+                                    row.get("precipitation"),  # 降水確率
+                                    row.get("temperature"),  # 気温
+                                    row.get("wave_height"),  # 波高
                                 ]
 
         return df
