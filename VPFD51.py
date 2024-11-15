@@ -8,89 +8,89 @@ import pandas as pd
 
 
 class ETL_VPFD51(ETL_jp_disaster):
-    def parse_DetailForecast(self, DetailForecast, detail, DateTime_dict, Name_dict):
-        DetailForecast_dict = {}
+    def parse_xml(self, xml, tag_name, DateTime_dict, Name_dict):
+        data_dict = {}
 
-        if detail == "WeatherPart":
-            for jmx in DetailForecast.find_all("jmx_eb:Weather"):
+        if tag_name == "WeatherPart":
+            for jmx in xml.find_all("jmx_eb:Weather"):
                 refID = jmx.get("refID")
 
-                DetailForecast_dict[refID] = {
+                data_dict[refID] = {
                     "DateTime": DateTime_dict.get(refID),
                     "Name": Name_dict.get(refID),
                     "type": jmx.get("type"),
                     "value": jmx.text,
                 }
 
-        elif detail == "WindForecastPart":
-            for WindForecast in DetailForecast.find_all("WindForecastPart"):
+        elif tag_name == "WindForecastPart":
+            for WindForecast in xml.find_all("WindForecastPart"):
                 refID = WindForecast.get("refID")
                 jmx = WindForecast.find("jmx_eb:WindDirection")
 
-                DetailForecast_dict[refID] = {
+                data_dict[refID] = {
                     "DateTime": DateTime_dict.get(refID),
                     "Name": Name_dict.get(refID),
                     "type": jmx.get("type"),
                     "value": jmx.text,
                 }
 
-        elif detail == "WaveHeightForecastPart":
-            for WaveHeightForecast in DetailForecast.find_all("WaveHeightForecastPart"):
+        elif tag_name == "WaveHeightForecastPart":
+            for WaveHeightForecast in xml.find_all("WaveHeightForecastPart"):
                 refID = WaveHeightForecast.get("refID")
                 jmx = WaveHeightForecast.find("jmx_eb:WaveHeight")
 
-                DetailForecast_dict[refID] = {
+                data_dict[refID] = {
                     "DateTime": DateTime_dict.get(refID),
                     "Name": Name_dict.get(refID),
                     "type": jmx.get("type"),
                     "value": jmx.text,
                 }
 
-        elif detail == "ProbabilityOfPrecipitationPart":
-            for jmx in DetailForecast.find_all("jmx_eb:ProbabilityOfPrecipitation"):
+        elif tag_name == "ProbabilityOfPrecipitationPart":
+            for jmx in xml.find_all("jmx_eb:ProbabilityOfPrecipitation"):
                 refID = jmx.get("refID")
 
-                DetailForecast_dict[refID] = {
+                data_dict[refID] = {
                     "DateTime": DateTime_dict.get(refID),
                     "Name": Name_dict.get(refID),
                     "type": jmx.get("type"),
                     "value": jmx.text,
                 }
 
-        elif detail == "TemperaturePart":
-            jmx = DetailForecast.find("jmx_eb:Temperature")
-            refID = jmx.get("refID")
-
-            DetailForecast_dict[refID] = {
-                "DateTime": DateTime_dict.get(refID),
-                "Name": Name_dict.get(refID),
-                "type": jmx.get("type"),
-                "value": jmx.text,
-            }
-
-        elif detail == "WindDirectionPart":
-            for jmx in DetailForecast.find_all("jmx_eb:WindDirection"):
+        elif tag_name == "TemperaturePart":
+            for jmx in xml.find_all("jmx_eb:Temperature"):
                 refID = jmx.get("refID")
 
-                DetailForecast_dict[refID] = {
+                data_dict[refID] = {
                     "DateTime": DateTime_dict.get(refID),
                     "Name": Name_dict.get(refID),
                     "type": jmx.get("type"),
                     "value": jmx.text,
                 }
 
-        elif detail == "WindSpeedPart":
-            for jmx in DetailForecast.find_all("jmx_eb:WindSpeedLevel"):
+        elif tag_name == "WindDirectionPart":
+            for jmx in xml.find_all("jmx_eb:WindDirection"):
                 refID = jmx.get("refID")
 
-                DetailForecast_dict[refID] = {
+                data_dict[refID] = {
                     "DateTime": DateTime_dict.get(refID),
                     "Name": Name_dict.get(refID),
                     "type": jmx.get("type"),
                     "value": jmx.text,
                 }
 
-        return DetailForecast_dict
+        elif tag_name == "WindSpeedPart":
+            for jmx in xml.find_all("jmx_eb:WindSpeedLevel"):
+                refID = jmx.get("refID")
+
+                data_dict[refID] = {
+                    "DateTime": DateTime_dict.get(refID),
+                    "Name": Name_dict.get(refID),
+                    "type": jmx.get("type"),
+                    "value": jmx.text,
+                }
+
+        return data_dict
 
     def xml_to_df(self, xml_path, soup):
         df = pd.DataFrame(columns=self.columns)
@@ -229,7 +229,7 @@ class ETL_VPFD51(ETL_jp_disaster):
                     try:
                         Area_Name = Item.find("Area").find("Name").text
 
-                    except:
+                    except AttributeError:
                         Area_Name = Item.find("Station").find("Name").text
 
                     # Item
@@ -246,14 +246,14 @@ class ETL_VPFD51(ETL_jp_disaster):
                             Property_Type = Property.find("Type").text
 
                             #     └ DetailForecast 予報文を記述する。※1(1)-1-1(1)参照。
-                            DetailForecast_dict = {}
+                            data_dict = {}
 
                             if Property_Type == "天気":
                                 ## DetailForecast資訊和WeatherPart重複故不採用
 
                                 # └ WeatherPart テロップ用天気予報用語の天気を記述する。※1(1)-1-1(2)参照。
                                 WeatherPart = Property.find("WeatherPart")
-                                DetailForecast_dict = self.parse_DetailForecast(
+                                data_dict = self.parse_xml(
                                     WeatherPart, "WeatherPart", DateTime_dict, Name_dict
                                 )
 
@@ -266,7 +266,7 @@ class ETL_VPFD51(ETL_jp_disaster):
 
                                 # └ DetailForecast 予報文を記述する。※1(1)-1-2
                                 DetailForecast = Property.find("DetailForecast")
-                                DetailForecast_dict = self.parse_DetailForecast(
+                                data_dict = self.parse_xml(
                                     DetailForecast,
                                     "WindForecastPart",
                                     DateTime_dict,
@@ -281,7 +281,7 @@ class ETL_VPFD51(ETL_jp_disaster):
 
                                 # └ DetailForecast 予報文を記述する。※1(1)-1-3参照。
                                 DetailForecast = Property.find("DetailForecast")
-                                DetailForecast_dict = self.parse_DetailForecast(
+                                data_dict = self.parse_xml(
                                     DetailForecast,
                                     "WaveHeightForecastPart",
                                     DateTime_dict,
@@ -313,7 +313,7 @@ class ETL_VPFD51(ETL_jp_disaster):
                                     "ProbabilityOfPrecipitationPart"
                                 )
 
-                                DetailForecast_dict = self.parse_DetailForecast(
+                                data_dict = self.parse_xml(
                                     ProbabilityOfPrecipitationPart,
                                     "ProbabilityOfPrecipitationPart",
                                     DateTime_dict,
@@ -378,7 +378,7 @@ class ETL_VPFD51(ETL_jp_disaster):
                                 # └ TemperaturePart 予想気温を記述する。※2-1-1参照。
                                 TemperaturePart = Property.find("TemperaturePart")
 
-                                DetailForecast_dict = self.parse_DetailForecast(
+                                data_dict = self.parse_xml(
                                     TemperaturePart,
                                     "TemperaturePart",
                                     DateTime_dict,
@@ -461,7 +461,7 @@ class ETL_VPFD51(ETL_jp_disaster):
                                 # └ WeatherPart 天気を記述する。※4-1-1(1) 「3時間内卓越天気」の詳細を参照。
                                 WeatherPart = Property.find("WeatherPart")
 
-                                DetailForecast_dict = self.parse_DetailForecast(
+                                data_dict = self.parse_xml(
                                     WeatherPart,
                                     "WeatherPart",
                                     DateTime_dict,
@@ -476,14 +476,14 @@ class ETL_VPFD51(ETL_jp_disaster):
                                 # └ WindDirectionPart 風向を記述する。※4-1-1(2)参照。
                                 WindDirectionPart = Property.find("WindDirectionPart")
 
-                                DetailForecast_dict = self.parse_DetailForecast(
+                                data_dict = self.parse_xml(
                                     WindDirectionPart,
                                     "WindDirectionPart",
                                     DateTime_dict,
                                     Name_dict,
                                 )
 
-                                for row in DetailForecast_dict.values():
+                                for row in data_dict.values():
                                     df.loc[len(df)] = [
                                         Title,  # 情報名称
                                         ReportDateTime,  # 発表時刻
@@ -500,7 +500,7 @@ class ETL_VPFD51(ETL_jp_disaster):
                                 # └ WindSpeedPart 風速(風速階級)を記述する。※4-1-1(3) 参照。
                                 WindSpeedPart = Property.find("WindSpeedPart")
 
-                                DetailForecast_dict = self.parse_DetailForecast(
+                                data_dict = self.parse_xml(
                                     WindSpeedPart,
                                     "WindSpeedPart",
                                     DateTime_dict,
@@ -517,14 +517,14 @@ class ETL_VPFD51(ETL_jp_disaster):
                             # └ TimeDefine 個々の時刻定義
                             # └ DateTime 基点時刻
                             # └ Item ※5-1 「気温の地域時系列予報」の詳細を参照
-                            #
+
                             # TimeSeriesInfo
                             # └ TimeDefines 予報の対象期間を示すとともに、対応する要素の timeId を記述する。
                             # └ TimeDefine 同一 TimeSeriesInfo 内にある要素の ID(refID)に対応する ID(timeId)を記述する。
                             # ID は 1~11、1~13、1~15。ID で示す、予報対象数と同数(11回、13回、15回)を繰り返して記述する。
                             # └ DateTime 予報時刻を示す。“2008-01-10T06:00:00+09:00”のように日本標準時で記述する。
                             # └ Item 気温の地域時系列予報と、予想地点を記述する。府県予報区に含まれる発表予想地点の数だけ繰り返す。※5-1参照。
-                            #
+
                             # ※5-1 「気温の地域時系列予報」の詳細
                             # Item 予報の内容
                             # └ Kind 個々の予報の内容
@@ -534,18 +534,36 @@ class ETL_VPFD51(ETL_jp_disaster):
                             # └ Station 発表予想地点
                             # └ Name 発表予想地点の名称
                             # └ Code 発表予想地点のコード
-                            #
+
                             # Item
                             # └ Kind 予報を記述する。
                             # └ Property 予報要素を記述する。
-                            # └ Type 気象要素名を記述する。Type が“3時間毎気温”の場合、TemperaturePart に3時間毎気温の予想を記述する。
-                            # └ TemperaturePart 気温を記述する。※5-1-1参照。
-                            # └ Station 発表予想地点を記述する。※
-                            # └ Name 発表予想地点の名称を、“東京”“大阪”などと記述する。
-                            # └ Code 発表予想地点のコード番号を、“44132”“62078”などと記述する。
-                            # ※対象地点は府県天気予報・府県週間天気予報_解説資料付録を参照のこと
+                            # └ Type 気象要素名を記述する。
+                            # Type が“3時間毎気温”の場合、TemperaturePart に3時間毎気温の予想を記述する。
+                            elif Property_Type == "３時間毎気温":
 
-                            for row in DetailForecast_dict.values():
+                                # └ TemperaturePart 気温を記述する。※5-1-1参照。
+                                TemperaturePart = Property.find("TemperaturePart")
+
+                                data_dict = self.parse_xml(
+                                    TemperaturePart,
+                                    "TemperaturePart",
+                                    DateTime_dict,
+                                    Name_dict,
+                                )
+
+                                # └ Station 発表予想地点を記述する。※
+                                # └ Name 発表予想地点の名称を、“東京”“大阪”などと記述する。
+                                # └ Code 発表予想地点のコード番号を、“44132”“62078”などと記述する。
+                                # ※対象地点は府県天気予報・府県週間天気予報_解説資料付録を参照のこと
+
+                            else:
+                                print(
+                                    f"Unexpected property type encountered: {Property_Type}"
+                                )
+                                raise
+
+                            for row in data_dict.values():
                                 df.loc[len(df)] = [
                                     Title,  # 情報名称
                                     ReportDateTime,  # 発表時刻
