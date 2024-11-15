@@ -157,7 +157,7 @@ class ETL_VPFD51(ETL_jp_disaster):
 
                 # └ MeteorologicalInfo
                 # MeteorologicalInfos の属性 type で指定した予報の項目を記述する。
-                MeteorologicalInfo = MeteorologicalInfos.find("MeteorologicalInfo")
+                ## MeteorologicalInfo = MeteorologicalInfos.find("MeteorologicalInfo")  ## 独自予報
 
                 # 3個別要素の詳細
                 # ※1(1) 区域予報「天気予報文」の詳細
@@ -511,6 +511,40 @@ class ETL_VPFD51(ETL_jp_disaster):
                                 # └ Name 発表予報区の名称を、“東京地方”“大阪府”などと記述する。
                                 # └ Code 発表予報区のコード番号を、“130010”“270000”などと記述する。
 
+                            # ※5 地点予報「気温の地域時系列予報」の詳細
+                            # TimeSeriesInfo 時系列情報
+                            # └ TimeDefines 時系列の時刻定義セット
+                            # └ TimeDefine 個々の時刻定義
+                            # └ DateTime 基点時刻
+                            # └ Item ※5-1 「気温の地域時系列予報」の詳細を参照
+                            #
+                            # TimeSeriesInfo
+                            # └ TimeDefines 予報の対象期間を示すとともに、対応する要素の timeId を記述する。
+                            # └ TimeDefine 同一 TimeSeriesInfo 内にある要素の ID(refID)に対応する ID(timeId)を記述する。
+                            # ID は 1~11、1~13、1~15。ID で示す、予報対象数と同数(11回、13回、15回)を繰り返して記述する。
+                            # └ DateTime 予報時刻を示す。“2008-01-10T06:00:00+09:00”のように日本標準時で記述する。
+                            # └ Item 気温の地域時系列予報と、予想地点を記述する。府県予報区に含まれる発表予想地点の数だけ繰り返す。※5-1参照。
+                            #
+                            # ※5-1 「気温の地域時系列予報」の詳細
+                            # Item 予報の内容
+                            # └ Kind 個々の予報の内容
+                            # └ Property 予報要素
+                            # └ Type 要素名
+                            # └ TemperaturePart ※5-1-1 「3時間毎気温」の詳細を参照
+                            # └ Station 発表予想地点
+                            # └ Name 発表予想地点の名称
+                            # └ Code 発表予想地点のコード
+                            #
+                            # Item
+                            # └ Kind 予報を記述する。
+                            # └ Property 予報要素を記述する。
+                            # └ Type 気象要素名を記述する。Type が“3時間毎気温”の場合、TemperaturePart に3時間毎気温の予想を記述する。
+                            # └ TemperaturePart 気温を記述する。※5-1-1参照。
+                            # └ Station 発表予想地点を記述する。※
+                            # └ Name 発表予想地点の名称を、“東京”“大阪”などと記述する。
+                            # └ Code 発表予想地点のコード番号を、“44132”“62078”などと記述する。
+                            # ※対象地点は府県天気予報・府県週間天気予報_解説資料付録を参照のこと
+
                             for row in DetailForecast_dict.values():
                                 df.loc[len(df)] = [
                                     Title,  # 情報名称
@@ -524,40 +558,6 @@ class ETL_VPFD51(ETL_jp_disaster):
                                     row["type"],  # type
                                     row["value"],  # value
                                 ]
-
-            # ※5 地点予報「気温の地域時系列予報」の詳細
-            # TimeSeriesInfo 時系列情報
-            # └ TimeDefines 時系列の時刻定義セット
-            # └ TimeDefine 個々の時刻定義
-            # └ DateTime 基点時刻
-            # └ Item ※5-1 「気温の地域時系列予報」の詳細を参照
-            #
-            # TimeSeriesInfo
-            # └ TimeDefines 予報の対象期間を示すとともに、対応する要素の timeId を記述する。
-            # └ TimeDefine 同一 TimeSeriesInfo 内にある要素の ID(refID)に対応する ID(timeId)を記述する。
-            # ID は 1~11、1~13、1~15。ID で示す、予報対象数と同数(11回、13回、15回)を繰り返して記述する。
-            # └ DateTime 予報時刻を示す。“2008-01-10T06:00:00+09:00”のように日本標準時で記述する。
-            # └ Item 気温の地域時系列予報と、予想地点を記述する。府県予報区に含まれる発表予想地点の数だけ繰り返す。※5-1参照。
-            #
-            # ※5-1 「気温の地域時系列予報」の詳細
-            # Item 予報の内容
-            # └ Kind 個々の予報の内容
-            # └ Property 予報要素
-            # └ Type 要素名
-            # └ TemperaturePart ※5-1-1 「3時間毎気温」の詳細を参照
-            # └ Station 発表予想地点
-            # └ Name 発表予想地点の名称
-            # └ Code 発表予想地点のコード
-            #
-            # Item
-            # └ Kind 予報を記述する。
-            # └ Property 予報要素を記述する。
-            # └ Type 気象要素名を記述する。Type が“3時間毎気温”の場合、TemperaturePart に3時間毎気温の予想を記述する。
-            # └ TemperaturePart 気温を記述する。※5-1-1参照。
-            # └ Station 発表予想地点を記述する。※
-            # └ Name 発表予想地点の名称を、“東京”“大阪”などと記述する。
-            # └ Code 発表予想地点のコード番号を、“44132”“62078”などと記述する。
-            # ※対象地点は府県天気予報・府県週間天気予報_解説資料付録を参照のこと
 
         return df
 
