@@ -11,6 +11,96 @@ class ETL_VPFD51(ETL_jp_disaster):
     def parse_xml(self, xml, tag_name, DateTime_dict, Name_dict):
         data_dict = {}
 
+        # ※1(1)-1-1(1) 「天気予報文」の詳細(A) (/Kind/Property/Type = 天気) /DetailForecast/WeatherForecastPart
+        # <DetailForecast>
+        #   <WeatherForecastPart refID="1">  # @refID は今日または今夜=1、明日=2、明後日=3 で、明後日はないことがある。
+        #     <Sentence>雨</Sentence>  # /Sentence はかな漢字電文と同じ天気予報文が入る。
+        #     <Base>  # 卓越天気 /Base のみの例。
+        #       <jmx_eb:Weather type="天気">雨</jmx_eb:Weather>
+        #     </Base>
+        #   </WeatherForecastPart>
+        #   <WeatherForecastPart refID="2">
+        #     <Sentence>雨 所により 夜のはじめ頃 雷を伴い 激しく 降る</Sentence>  # 地域天気が付加される例
+        #     <Base>
+        #       <jmx_eb:Weather type="天気">雨</jmx_eb:Weather>
+        #     </Base>
+        #     <SubArea>  # 地域天気は、かな漢字電文の文章がそのまま入る。
+        #       <Sentence type="地域天気">所により 夜のはじめ頃 雷を伴い 激しく 降る</Sentence>
+        #     </SubArea>
+        #   </WeatherForecastPart>
+        #   <WeatherForecastPart refID="3">
+        #     <Sentence>雪 で ふぶく 後 くもり</Sentence>  # 「ふぶく」の例
+        #     <Base>
+        #       <jmx_eb:Weather type="天気" condition="ふぶく">雪</jmx_eb:Weather>  # 「 雪 」の天気の場合、@condition に「ふぶく」が付加されることがある。
+        #     </Base>
+        #     <Becoming>
+        #       <TimeModifier>後</TimeModifier>
+        #       <jmx_eb:Weather type="天気">くもり</jmx_eb:Weather>
+        #     </Becoming>
+        #   </WeatherForecastPart>
+        # </DetailForecast>
+
+        # ※1(1)-1-1(1) 「天気予報文」の詳細(B) (/Kind/Property/Type = 天気) /DetailForecast/WeatherForecastPart
+        # <DetailForecast>
+        #   <WeatherForecastPart refID="1">
+        #     <Sentence>くもり 昼前 から 晴れ 所により 未明 雪</Sentence>
+        #     <Base>  # 卓越天気/Base → /Becoming の例。
+        #       <jmx_eb:Weather type="天気">くもり</jmx_eb:Weather>
+        #     </Base>
+        #     <Becoming>
+        #       <TimeModifier>昼前 から</TimeModifier>
+        #       <jmx_eb:Weather type="天気">晴れ</jmx_eb:Weather>
+        #     </Becoming>
+        #     <SubArea>
+        #       <Sentence type="地域天気">所により 未明 雪</Sentence>
+        #     </SubArea>
+        #   </WeatherForecastPart>
+        #   <WeatherForecastPart refID="2">
+        #     <Sentence>くもり 昼過ぎ から 時々 晴れ</Sentence>
+        #     <Base>  # 卓越天気/Base → /Becoming の例
+        #       <jmx_eb:Weather type="天気">くもり</jmx_eb:Weather>
+        #     </Base>
+        #     <Becoming>
+        #       <TimeModifier>昼過ぎ から 時々</TimeModifier>  # /TimeModifier に時間の表現が2種類入る例。
+        #       <jmx_eb:Weather type="天気">晴れ</jmx_eb:Weather>
+        #     </Becoming>
+        #   </WeatherForecastPart>
+        #   <WeatherForecastPart refID="3">
+        #     <Sentence>くもり 時々 雪</Sentence>
+        #     <Base>  # 卓越天気/Base → /Temporary の例。
+        #       <jmx_eb:Weather type="天気">くもり</jmx_eb:Weather>
+        #     </Base>
+        #     <Temporary>
+        #       <TimeModifier>時々</TimeModifier>
+        #       <jmx_eb:Weather type="天気">雪</jmx_eb:Weather>
+        #     </Temporary>
+        #   </WeatherForecastPart>
+        # </DetailForecast>
+
+        # ※1(1)-1-1(1) 「天気予報文」の詳細(C) (/Kind/Property/Type = 天気) /DetailForecast/WeatherForecastPart
+        # ...
+
+        # ※1(1)-1-1(1) 「天気予報文」の詳細(D) (/Kind/Property/Type = 天気) /DetailForecast/WeatherForecastPart
+        # ...
+
+        # ※1(1)-1-1(1) 「天気予報文」の詳細(E) (/Kind/Property/Type = 天気) /DetailForecast/WeatherForecastPart
+        # ...
+
+        # ※1(1)-1-1(2) 「テロップ用天気予報用語の天気」の詳細 (/Kind/Property/Type = 天気) /WeatherPart
+        # <WeatherPart>
+        #   <jmx_eb:Weather refID="1" type="天気">雨後雪</jmx_eb:Weather>
+        #   <jmx_eb:Weather refID="2" type="天気">雪</jmx_eb:Weather>
+        # </WeatherPart>
+
+        # 値は「天気予報用テロップ番号」に対応した天気(テロップ用天気予報用語の天気)が入る。
+        # 対応は府県天気予報・府県週間天気予報_解説資料付録を参照のこと。
+
+        # ※4-1-1(1) 「3時間内卓越天気」の詳細 (/Kind/Property/Type = 3時間内卓越天気) /WeatherPart
+        # <WeatherPart>
+        #   <jmx_eb:Weather refID="1" type="天気">雨</jmx_eb:Weather>
+        #   <jmx_eb:Weather refID="2" type="天気">雨</jmx_eb:Weather>
+        # </WeatherPart>
+
         if tag_name == "WeatherPart":
             for jmx in xml.find_all("jmx_eb:Weather"):
                 refID = jmx.get("refID")
@@ -21,6 +111,37 @@ class ETL_VPFD51(ETL_jp_disaster):
                     "type": jmx.get("type"),
                     "value": jmx.text,
                 }
+
+        # ※1(1)-1-1(3) 「天気予報用テロップ番号」の詳細 (/Kind/Property/Type = 天気) /WeatherCodePart
+        # ...
+
+        # ※1(1)-1-2 「風の予報文」の詳細(A) (/Kind/Property/Type = 風) /DetailForecast/WindForecastPart
+        # 代表風予報/Base のみの例。
+        # /condition を利用して風の強さの階級を述べる例。
+        # 階級は「やや強く」「強く」「非常に強く」。
+        # 代表風予報/Base → /Becoming の例。
+        # ...
+
+        # ※1(1)-1-2 「風の予報文」の詳細(B) (/Kind/Property/Type = 風) /DetailForecast/WindForecastPart
+        # 地域風予報を述べる例
+        # /SubArea を使用。
+        # ※対象地域は府県天気予報・府県週間天気予報_解説資料付録を参照のこと
+        # 「おさまり」の例。
+        # /Base と/Becoming の風向が同じで、
+        # /Base の風の強さの階級が指定されていて、
+        # /Becoming の風の強さの階級が指定されない場合に、「おさまり」を用いる。
+        # ...
+
+        # ※1(1)-1-2 「風の予報文」の詳細(C) (/Kind/Property/Type = 風) /DetailForecast/WindForecastPart
+        # 「風弱く」の例。
+        # 1日を通して弱い風が予想されるとき、「風弱く」を用いる
+        # 「風弱く」では、風向は特定されない。
+        # 地域風予報で「海上」を使用する例。
+        # また、地域風予報で「後」表現となる例。
+        # /SubArea を使用。
+        # ※対象地域は府県天気予報・府県週間天気予報_解説資料付録を参照のこと。
+        # /Base を省略。
+        # ...
 
         elif tag_name == "WindForecastPart":
             for WindForecast in xml.find_all("WindForecastPart"):
@@ -34,6 +155,15 @@ class ETL_VPFD51(ETL_jp_disaster):
                     "value": jmx.text,
                 }
 
+        # ※1(1)-1-3 「波の予報文」の詳細(A) (/Kind/Property/Type = 波) /DetailForecast/WaveHeightForecastPart
+        # ...
+
+        # ※1(1)-1-3 「波の予報文」の詳細(B) (/Kind/Property/Type = 波) /DetailForecast/WaveHeightForecastPart
+        # ...
+
+        # ※1(1)-1-3 「波の予報文」の詳細(C) (/Kind/Property/Type = 波) /DetailForecast/WaveHeightForecastPart
+        # ...
+
         elif tag_name == "WaveHeightForecastPart":
             for WaveHeightForecast in xml.find_all("WaveHeightForecastPart"):
                 refID = WaveHeightForecast.get("refID")
@@ -46,6 +176,22 @@ class ETL_VPFD51(ETL_jp_disaster):
                     "value": jmx.text,
                 }
 
+        # ※1(2)-1-1 「降水確率」の予報文の詳細 (/Kind/Property/Type = 降水確率) /ProbabilityOfPrecipitationPart
+        # /condition は、降水種別(雨雪判別)が入る。
+        # 「雨」「雨か雪」「雪か雨」
+        # 「雪」の4種類。
+        # 値は、0 から 100 の11個の整数の1つが入る。
+        # <ProbabilityOfPrecipitationPart>
+        #   <jmx_eb:ProbabilityOfPrecipitation condition="雨" description="0パーセント" refID="1" type="6時間降水確率" unit="%">
+        #     0
+        #   </jmx_eb:ProbabilityOfPrecipitation>
+        #   <jmx_eb:ProbabilityOfPrecipitation condition="雨か雪" description="30パーセント" refID="2" type="6時間降水確率" unit="%">
+        #     30
+        #   </jmx_eb:ProbabilityOfPrecipitation>
+        #   <jmx_eb:ProbabilityOfPrecipitation condition="雪か雨" description="60パーセント" refID="3" type="6時間降水確率" unit="%">
+        #     60
+        #   </jmx_eb:ProbabilityOfPrecipitation>
+        # </ProbabilityOfPrecipitationPart>
         elif tag_name == "ProbabilityOfPrecipitationPart":
             for jmx in xml.find_all("jmx_eb:ProbabilityOfPrecipitation"):
                 refID = jmx.get("refID")
@@ -56,6 +202,26 @@ class ETL_VPFD51(ETL_jp_disaster):
                     "type": jmx.get("type"),
                     "value": jmx.text,
                 }
+
+        # ※2-1-1 「予想気温」の予報文の詳細 (/Kind/Property/Type = 日中の最高気温/最高気温/朝の最低気温) /TemperaturePart
+        # 予想気温は、整数。マイナスの値も取りうる。
+        # <TemperaturePart>
+        #   <jmx_eb:Temperature description="7度" refID="1" type="日中の最高気温" unit="度">7</jmx_eb:Temperature>
+        # </TemperaturePart>
+        # <TemperaturePart>
+        #   <jmx_eb:Temperature description="7度" refID="2" type="最高気温" unit="度">7</jmx_eb:Temperature>
+        # </TemperaturePart>
+        # <TemperaturePart>
+        #   <jmx_eb:Temperature description=" マ イ ナ ス 3 度 " refID="3" type=" 朝 の 最 低 気 温 " unit=" 度 ">-3</jmx_eb:Temperature>
+        # </TemperaturePart>
+
+        # ※5-1-1 「3時間毎気温」の詳細 (/Kind/Property/Type = 3時間毎気温) /TemperaturePart
+        # 地域時系列予報の時別気温が入る。
+        # マイナスの値も取りうる。
+        # <TemperaturePart>
+        #   <jmx_eb:Temperature description="2度" refID="1" type="気温" unit="度">2</jmx_eb:Temperature>
+        #   <jmx_eb:Temperature description="3度" refID="2" type="気温" unit="度">3</jmx_eb:Temperature>
+        # </TemperaturePart>
 
         elif tag_name == "TemperaturePart":
             for jmx in xml.find_all("jmx_eb:Temperature"):
@@ -68,6 +234,12 @@ class ETL_VPFD51(ETL_jp_disaster):
                     "value": jmx.text,
                 }
 
+        # ※4-1-1(2) 「3時間内代表風の風向」の詳細 (/Kind/Property/Type = 3時間内代表風) /WindDirectionPart
+        # 地域時系列予報の時別風(風向)が入る。
+        # <WindDirectionPart>
+        #   <jmx_eb:WindDirection refID="1" type="風向" unit="8方位漢字">東</jmx_eb:WindDirection>
+        #   <jmx_eb:WindDirection refID="2" type="風向" unit="8方位漢字">東</jmx_eb:WindDirection>
+        # </WindDirectionPart>
         elif tag_name == "WindDirectionPart":
             for jmx in xml.find_all("jmx_eb:WindDirection"):
                 refID = jmx.get("refID")
@@ -78,6 +250,14 @@ class ETL_VPFD51(ETL_jp_disaster):
                     "type": jmx.get("type"),
                     "value": jmx.text,
                 }
+
+        # ※4-1-1(3) 「3時間内代表風の風速階級」の詳細 (/Kind/Property/Type = 3時間内代表風) /WindSpeedPart
+        # 地域時系列予報の時別風(風のレベル値)が入る。
+        # 風のレベル値は1~6。
+        # <WindSpeedPart>
+        #   <WindSpeedLevel description="毎秒0から2メートル" range="0 2" refID="1" type="風速階級">1</WindSpeedLevel>
+        #   <WindSpeedLevel description="毎秒3から5メートル" range="3 5" refID="2" type="風速階級">2</WindSpeedLevel>
+        # </WindSpeedPart>
 
         elif tag_name == "WindSpeedPart":
             for jmx in xml.find_all("WindSpeedLevel"):
