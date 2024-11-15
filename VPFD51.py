@@ -8,6 +8,40 @@ import pandas as pd
 
 
 class ETL_VPFD51(ETL_jp_disaster):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.soup = None
+
+        self.title = ""
+        self.report_date_time = ""
+        self.target_date_time = ""
+        self.prefecture = ""
+
+        self.df = None
+        self.df_weather = None
+        self.df_wind = None
+        self.df_wave = None
+        self.df_6hr_precipitation = None
+
+    def int_df_weather(self):
+        columns = [
+            "今日予報の始めの時刻",
+            "今日天気",
+            "今日風向",
+            "今日波高",
+            "明日予報の始めの時刻",
+            "明日天気",
+            "明日風向",
+            "明日波高",
+            "明後日予報の始めの時刻",
+            "明後日天気",
+            "明後日風向",
+            "明後日波高",
+        ]
+
+        self.df_weather = pd.DataFrame(columns=columns)
+
     def parse_xml(self, xml, tag_name, DateTime_dict, Name_dict):
         data_dict = {}
 
@@ -280,7 +314,7 @@ class ETL_VPFD51(ETL_jp_disaster):
         # 1管理部の構成
         # Control
         # └ Title 情報名称
-        Title = soup.find("Title").text
+        self.title = soup.find("Title").text
 
         # └ DateTime 発表時刻
         # └ Status 運用種別
@@ -291,13 +325,15 @@ class ETL_VPFD51(ETL_jp_disaster):
         # 1 ヘッダ部の構成
         # Head
         # └ Title 標題
-        prefecture = soup.find("Head").find("Title").text.replace("府県天気予報", "")
+        self.prefecture = (
+            soup.find("Head").find("Title").text.replace("府県天気予報", "")
+        )
 
         # └ ReportDateTime 発表時刻
-        ReportDateTime = self.format_datetime(soup.find("ReportDateTime").text)
+        self.report_date_time = self.format_datetime(soup.find("ReportDateTime").text)
 
         # └ TargetDateTime 基点時刻
-        TargetDateTime = self.format_datetime(soup.find("TargetDateTime").text)
+        self.target_date_time = self.format_datetime(soup.find("TargetDateTime").text)
 
         # └ TargetDuration 基点時刻からの取りうる時間
         # └ EventID 識別情報
@@ -667,11 +703,11 @@ class ETL_VPFD51(ETL_jp_disaster):
 
                                 for row in data_dict.values():
                                     df.loc[len(df)] = [
-                                        Title,  # 情報名称
-                                        ReportDateTime,  # 発表時刻
-                                        TargetDateTime,  # 基点時刻
+                                        self.title,  # 情報名称
+                                        self.report_date_time,  # 発表時刻
+                                        self.target_date_time,  # 基点時刻
                                         MeteorologicalInfos_type,  # 予報の項目
-                                        prefecture,  # 都道府県
+                                        self.prefecture,  # 都道府県
                                         Area_Name,  # 対象地域
                                         Property_Type,  # 気象要素名
                                         row.get("DateTime"),  # 予報期間の始めの時刻
@@ -754,11 +790,11 @@ class ETL_VPFD51(ETL_jp_disaster):
 
                             for row in data_dict.values():
                                 df.loc[len(df)] = [
-                                    Title,  # 情報名称
-                                    ReportDateTime,  # 発表時刻
-                                    TargetDateTime,  # 基点時刻
+                                    self.title,  # 情報名称
+                                    self.report_date_time,  # 発表時刻
+                                    self.target_date_time,  # 基点時刻
                                     MeteorologicalInfos_type,  # 予報の項目
-                                    prefecture,  # 都道府県
+                                    self.prefecture,  # 都道府県
                                     Area_Name,  # 対象地域
                                     Property_Type,  # 気象要素名
                                     row.get("DateTime"),  # 予報期間の始めの時刻
