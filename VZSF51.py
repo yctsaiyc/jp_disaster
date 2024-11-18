@@ -9,53 +9,73 @@ import pandas as pd
 
 class ETL_VZSF51(ETL_jp_disaster):
     def parse_xxxPart(self, Property):
-        pass
         # (4) 内容部詳細
         # Item 部は、天気図要素及び悪天情報の数だけ繰り返す。
+
         # 1要素が“低気圧”“高気圧”“熱帯低気圧”“低圧部”のとき
-        #
-        # タグ 解説
+
         # Item 要素詳細があるだけ Item 部を繰り返す。
         # └ Kind これらの天気図要素では、要素がもつ内容は1つで、CenterPart のみ。
         # └ Property
         # └ Type 天気図要素名“低気圧”“高気圧”“熱帯低気圧”“低圧部”のいずれかを記す。
         # └ CenterPart 中心情報 *CenterPart の詳細を参照。
-        #
+
         # ア.CenterPart の詳細
-        #
-        # タグ 解説
-        # CenterPart
-        # └ jmx_eb:Coordinate 中心位置。擾乱の中心位置緯度経度を“+31.7+134.7/”等と記す。
-        # └ @type “中心位置(度)” と示す。
-        # └ @condition Type=“低圧部”の場合、“付近”と記す。それ以外の場合は@condition は省略する。
-        # └ jmx_eb:Direction 移動方向。擾乱の移動方向を北を360度とした方位で“310”等と示す。ほとんど停滞しており、方向が定まらない時
-        #
-        # には、空タグとする。
-        # └ @type “移動方向” と記す。
-        # └ @unit “度(真方位)” と記す。
-        # └ @condition 方向が定まらない時に“不定”と記す。それ以外の場合は@condition は省略する。
-        # └ jmx_eb:Speed 移動速度。属性の unit が“km/h”の場合は、1時間に進む距離(km)を“25”等と示す。ほとんど停滞、あるいは、
-        #
-        # ゆっくり移動している場合は、空タグとする。
-        #
-        # └ @type “移動速度” と記す。
-        # └ @unit “km/h” と記す。
-        #
-        # └ @description “30km/h”や“ほとんど停滞”、“ゆっくり”などと記す。地上24時間予想図などの予想図では移動速度が無いた
-        #
-        # め省略する。
-        #
-        # └ jmx_eb:Speed 移動速度。属性の unit が“ノット”の場合は、1時間に進む距離(海里)を“10”等と記す。
-        # └ @type “移動速度” と記す。
-        # └ @unit “ノット”と記す。
-        # └ @description “15KT”や“ALMOST STNR”などと記す。地上24時間予想図などの予想図では移動情報が無いため省
-        #
-        # 略する。
-        #
-        # └ jmx_eb:Pressure 中心気圧。擾乱の中心気圧を“980”等と記す。
-        # └ @type “中心気圧” と記す。
-        # └ @unit “hPa” と記す。
-        #
+        CenterPart = Property.find("CenterPart")
+
+        if CenterPart:
+
+            # CenterPart
+            # └ jmx_eb:Coordinate 中心位置。擾乱の中心位置緯度経度を“+31.7+134.7/”等と記す。
+            Coordinate = CenterPart.find("jmx_eb:Coordinate")
+
+            if Coordinate:
+                latitude, longitude, height = self.process_coordinate(Coordinate.text)
+
+                # └ @type “中心位置(度)” と示す。
+                # Coordinate_type = Coordinate.get("type")
+
+                # └ @condition Type=“低圧部”の場合、“付近”と記す。それ以外の場合は@condition は省略する。
+
+            # └ jmx_eb:Direction 移動方向。擾乱の移動方向を北を360度とした方位で“310”等と示す。
+            #     ほとんど停滞しており、方向が定まらない時には、空タグとする。
+            Direction = CenterPart.find("jmx_eb:Direction")
+
+            if Direction:
+                direction = Direction.text
+
+                # └ @type “移動方向” と記す。
+                # └ @unit “度(真方位)” と記す。
+                # └ @condition 方向が定まらない時に“不定”と記す。それ以外の場合は@condition は省略する。
+
+            # └ jmx_eb:Speed 移動速度。属性の unit が“km/h”の場合は、1時間に進む距離(km)を“25”等と示す。
+            #     ほとんど停滞、あるいは、ゆっくり移動している場合は、空タグとする。
+            Speed = CenterPart.find("jmx_eb:Speed")
+
+            if Speed:
+                speed = Speed.text
+
+                # └ @type “移動速度” と記す。
+
+                # └ @unit “km/h” と記す。
+                speed_unit = Speed.get("unit")
+
+                # └ @description “30km/h”や“ほとんど停滞”、“ゆっくり”などと記す。地上24時間予想図などの予想図では移動速度が無いため省略する。
+
+            # └ jmx_eb:Speed 移動速度。属性の unit が“ノット”の場合は、1時間に進む距離(海里)を“10”等と記す。
+            #     └ @type “移動速度” と記す。
+            #     └ @unit “ノット”と記す。
+            #     └ @description “15KT”や“ALMOST STNR”などと記す。地上24時間予想図などの予想図では移動情報が無いため省略する。
+
+            # └ jmx_eb:Pressure 中心気圧。擾乱の中心気圧を“980”等と記す。
+            Pressure = CenterPart.find("jmx_eb:Pressure")
+
+            if Pressure:
+                pressure = Pressure.text
+
+                # └ @type “中心気圧” と記す。
+                # └ @unit “hPa” と記す。
+
         # 2要素が“台風”のときは、要素が持つ内容が複数あり、Kind 以下のタグが並列に存在する
         # タグ 解説
         #
