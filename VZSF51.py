@@ -8,165 +8,8 @@ import pandas as pd
 
 
 class ETL_VZSF51(ETL_jp_disaster):
-    def xml_to_df(self, xml_path, soup):
-        df = pd.DataFrame()
-
-        # 天気図情報 XML の解説
-
-        # 天気図情報は、等圧線が通る位置や高低気圧の位置および海上における悪天予想情報等を緯度経度データで格納しており、
-        # 実況天気図および予想天気図を拡大縮小等の編集可能なベクトルデータとして提供する事を目的とする。
-        # 本書では、データ構造に従って「提供範囲」「全体構成」「各部の構成と内容」「実例」に分けて解説を行う。
-
-        # 0. 提供範囲
-
-        # 各天気図情報の提供範囲は以下の通りである
-
-        # 情報名称 提供範囲
-
-        # 地上実況図、地上24時間予想図、地上48時間予想図
-        # 図1の「速報天気図の提供領域」
-
-        # アジア太平洋地上実況図
-        # 図1の「アジア太平洋地上天気図の提供領域」
-
-        # アジア太平洋海上悪天24時間予想図、アジア太平洋海上悪天48時間予想図
-
-        # 高低気圧の位置や等圧線・前線の位置等は、図1の「アジア太平洋地上天気図の提供領域」
-        # 強風域や霧域などの悪天情報は、図1の「悪天情報の提供領域」
-
-        # 1. 全体構成
-        # 天気図情報XMLは、大きく分けて「管理部」「ヘッダ部」「ボディ部」の3つの構成からなる。
-        # ...
-
-        # 2. 各部の構成と内容
-        # (1) Control 部の詳細
-        # Control 部については、他の気象庁XMLとほぼ同様の構造となっている。
-
-        # Control
-        # └Title 情報名称
-        # “地上実況図”“地上24時間予想図”“地上48時間予想図”“アジア太平洋地上実況図”“アジア太平洋海上悪天24時間予想図”
-        # “アジア太平洋海上悪天48時間予想図”のいずれかを記す。
-        Title = soup.find("Title").text
-
-        # └DateTime 発表時刻。“2010-05-19T02:03:15Z”のように協定世界時で記す。
-
-        # └Status 運用種別。“通常”“訓練”“試験”のいずれかを記す。
-        # “訓練”“試験”は正規の情報として利用してはならないことを示す。
-
-        # └EditorialOffice 編集官署名。“気象庁本庁”で固定。
-
-        # └PublishingOffice 発表官署名。“気象庁”で固定。
-
-        # (2) Head 部の詳細
-        # Head 部についても、他の気象庁XMLとほぼ同様の構造となっている。
-
-        # Title 標題。
-        # “地上実況図”“地上24時間予想図”“地上48時間予想図”“アジア太平洋地上実況図”“アジア太平洋海上悪天24時間予想図”
-        # “アジア太平洋海上悪天48時間予想図”のいずれかを記す。
-
-        # ReportDateTime 発表時刻。“2012-01-10T05:00:00+09:00”のように日本標準時で記す。
-        ReportDateTime = self.format_datetime(soup.find("ReportDateTime").text)
-
-        # TargetDateTime 基点時刻。
-        # “2012-01-10T03:00:00+09:00”のように日本標準時で記す。
-        # Title が“地上実況図”“アジア太平洋地上実況図”であれば、観測日時刻、“地上24時間予想図”“地上48時間予想図”
-        # “アジア太平洋海上悪天24時間予想図”“アジア太平洋海上悪天48時間予想図”であれば数値予報初期値時刻を示す。
-        TargetDateTime = self.format_datetime(soup.find("TargetDateTime").text)
-
-        # EventID 値は記述しない(空タグとする)。
-
-        # InfoType 情報形態。
-        # “発表”“訂正”“取消”のいずれかを記す。
-
-        # Serial 値は記述しない(空タグとする)。
-
-        # InfoKind スキーマの運用種別情報。
-        # “天気図情報”で固定。
-
-        # InfoKindVersion スキーマの運用種別情報のバージョン。
-        # 本解説のバージョン番号は“1.1_1”。
-
-        # Headline 見出し要素。
-        # └ Text 値は記述しない(空タグとする)。
-
-        # (3) Body 部の詳細
-        # Body 部の Item タグ1つに対して1つの天気図要素を格納する。
-        # Item 以下は、ここでは概要のみとし、詳細は(4)内容部詳細で示す。
-
-        # MeteorologicalInfos 高低気圧や前線等の“天気図情報”と“悪天情報”は、異なる MeteorologicalInfos で示す。
-        MeteorologicalInfos = soup.find("MeteorologicalInfos")
-
-        # └@type “天気図情報”または“悪天情報”と記す。
-        MeteorologicalInfos_type = MeteorologicalInfos.get("type")
-
-        # └ MeteorologicalInfo
-        MeteorologicalInfo = MeteorologicalInfos.find("MeteorologicalInfo")
-
-        #     └ DateTime 天気図の対象となる時刻を、“2011-12-18T12:00:00+09:00”のように日本標準時で記す。
-        DateTime = self.format_datetime(MeteorologicalInfo.find("DateTime").text)
-        #         例えば type が“予想 24時間後”の場合は数値予報初期時刻から24時間後の時刻を示す。
-
-        #         └@type “実況”“予想 24時間後”“予想 48時間後”のいずれかを記す。
-        DateTime_type = MeteorologicalInfo.find("DateTime").get("type")
-
-        # └ Item このタグ1つに対して1つの天気図要素または悪天情報要素を格納する。詳細は、(4)で示す。
-        for Item in MeteorologicalInfo.find_all("Item"):
-
-            # └ Kind
-            Kind = Item.find("Kind")
-
-            #     └ Name
-            #         MeteolorogicalInfos@type=“天気図情報”の場合は、このタグを省略する。
-            #         MeteorologicalInfos@type=“悪天情報”の場合は、悪天情報の種類“悪天情報(強風)”
-            #             “悪天情報(霧)”“悪天情報(海氷)”“悪天情報(船体着氷)”のいずれかを記す。
-            Kind_Name = Kind.find("Name")
-
-            if Kind_Name:
-                Kind_Name = Kind_Name.text
-
-            #     └ Property
-            Property = Kind.find("Property")
-
-            #         MeteolorogicalInfos@type=“天気図情報”の場合、及び、
-            #         MeteorologicalInfos@type=“悪天情報”で Item/Kind/Name=“悪天情報(強風)”の場合に出現する。
-            #         MeteorologicalInfos@type=“悪天情報”で Item/Kind/Name= “悪天情報(霧)”
-            #             “悪天情報(海氷)”“悪天情報(船体着氷)”の場合はこのタグを省略する。
-
-            #         └ Type 天気図要素名等。
-            #             “台風”“熱帯低気圧”“低気圧”“高気圧”“低圧部”“前線”等の天気図要素の種類もしくは悪天情報の“風”、
-            #             または“風”“呼称”“階級”等の要素を修飾する種別のいずれかを記す。
-            Property_type = Property.get("type")
-
-            #             └ xxxPart 要素がもつ内容。Type により、“CenterPart”“WindSpeedPart”“TyphoonNamePart”
-            #                 “ClassPart”“CoodinatePart”“IsobarPart”“WindPart”のいずれか1つを持つ。
-            xxxPart = self.parse_xxxPart(Property)
-
-            # └ Area MeteorologicalInfos@type=“悪天情報”の場合に出現し、悪天情報の対象領域を示す。
-            #     Item/Kind/Name=“悪天情報(強風)”の場合、強風を表現する対象海上地点(Name と Coordinate)を示す。
-            #     Item/Kind/Name=“悪天情報(霧)”の場合、対象多角形領域(Name と Polygon)または対象海域(Name と Code)を示す。
-            #     Item/Kind/Name=“悪天情報(海氷)”または“悪天情報(船体着氷)”の場合、対象格子(0.5 度四方の領域)(Name と Coordinate)を示す。
-            #     └@codeType Item/Kind/Name=“悪天情報(霧)”において、海域を対象とする場合に“全般海上海域名”と記す。
-
-            #     対象領域を Codeで示さない場合は省略する。
-            #     └ Name 悪天情報の対象領域名。
-            if Item.find("Area"):
-                if Item.find("Area").find("Name"):
-                    Area_Name = Item.find("Area").find("Name").text
-
-            #         Item/Kind/Name=“悪天情報(霧)”において、海域を対象とする場合は海域名(「日本海」「オホーツク海」等)を、
-            #         多角形領域を対象とする場合は“霧域”と記す。また、Item/Kind/Name=“悪天情報(強風)”においては“強風域”、
-            #         Item/Kind/Name=“悪天情報(海氷/船体着氷)”においては“海氷域/船体着氷域”と記す。
-
-            #     └ Code 悪天情報の対象領域コード。
-            #         Item/Kind/Name=“悪天情報(霧)”において、海域を対象とする場合は対応するコードを記す。
-            #         全般海上海域名“AreaMarineA”コード表が対応する。
-
-            #     └ jmx_eb:Polygon 悪天情報の対象多角形領域。
-            #         Item/Kind/Name=“悪天情報(霧)”において対象多角形領域を示す場合に、領域を囲む多角形の頂点を緯度経度で示す。
-
-            #     └ jmx_eb:Coordinate 悪天情報の対象緯度経度値を示す。Item/Kind/Name=“悪天情報(強風)”の場合は、強風を表現する対象海上地点を、
-            #         Item/Kind/Name=“悪天情報(海氷)”または“悪天情報(船体着氷)”の場合は、対象格子の北西端の位置を、緯度経度で示す。
-
+    def parse_xxxPart(self, Property):
+        pass
         # (4) 内容部詳細
         # Item 部は、天気図要素及び悪天情報の数だけ繰り返す。
         # 1要素が“低気圧”“高気圧”“熱帯低気圧”“低圧部”のとき
@@ -397,6 +240,166 @@ class ETL_VZSF51(ETL_jp_disaster):
         # 3.2.6 Body 部詳細(悪天情報(霧)の例)
         # 3.2.7 Body 部詳細(悪天情報(海氷/船体着氷)の例)
         # ...
+
+    def xml_to_df(self, xml_path, soup):
+        df = pd.DataFrame()
+
+        # 天気図情報 XML の解説
+
+        # 天気図情報は、等圧線が通る位置や高低気圧の位置および海上における悪天予想情報等を緯度経度データで格納しており、
+        # 実況天気図および予想天気図を拡大縮小等の編集可能なベクトルデータとして提供する事を目的とする。
+        # 本書では、データ構造に従って「提供範囲」「全体構成」「各部の構成と内容」「実例」に分けて解説を行う。
+
+        # 0. 提供範囲
+
+        # 各天気図情報の提供範囲は以下の通りである
+
+        # 情報名称 提供範囲
+
+        # 地上実況図、地上24時間予想図、地上48時間予想図
+        # 図1の「速報天気図の提供領域」
+
+        # アジア太平洋地上実況図
+        # 図1の「アジア太平洋地上天気図の提供領域」
+
+        # アジア太平洋海上悪天24時間予想図、アジア太平洋海上悪天48時間予想図
+
+        # 高低気圧の位置や等圧線・前線の位置等は、図1の「アジア太平洋地上天気図の提供領域」
+        # 強風域や霧域などの悪天情報は、図1の「悪天情報の提供領域」
+
+        # 1. 全体構成
+        # 天気図情報XMLは、大きく分けて「管理部」「ヘッダ部」「ボディ部」の3つの構成からなる。
+        # ...
+
+        # 2. 各部の構成と内容
+        # (1) Control 部の詳細
+        # Control 部については、他の気象庁XMLとほぼ同様の構造となっている。
+
+        # Control
+        # └Title 情報名称
+        # “地上実況図”“地上24時間予想図”“地上48時間予想図”“アジア太平洋地上実況図”“アジア太平洋海上悪天24時間予想図”
+        # “アジア太平洋海上悪天48時間予想図”のいずれかを記す。
+        Title = soup.find("Title").text
+
+        # └DateTime 発表時刻。“2010-05-19T02:03:15Z”のように協定世界時で記す。
+
+        # └Status 運用種別。“通常”“訓練”“試験”のいずれかを記す。
+        # “訓練”“試験”は正規の情報として利用してはならないことを示す。
+
+        # └EditorialOffice 編集官署名。“気象庁本庁”で固定。
+
+        # └PublishingOffice 発表官署名。“気象庁”で固定。
+
+        # (2) Head 部の詳細
+        # Head 部についても、他の気象庁XMLとほぼ同様の構造となっている。
+
+        # Title 標題。
+        # “地上実況図”“地上24時間予想図”“地上48時間予想図”“アジア太平洋地上実況図”“アジア太平洋海上悪天24時間予想図”
+        # “アジア太平洋海上悪天48時間予想図”のいずれかを記す。
+
+        # ReportDateTime 発表時刻。“2012-01-10T05:00:00+09:00”のように日本標準時で記す。
+        ReportDateTime = self.format_datetime(soup.find("ReportDateTime").text)
+
+        # TargetDateTime 基点時刻。
+        # “2012-01-10T03:00:00+09:00”のように日本標準時で記す。
+        # Title が“地上実況図”“アジア太平洋地上実況図”であれば、観測日時刻、“地上24時間予想図”“地上48時間予想図”
+        # “アジア太平洋海上悪天24時間予想図”“アジア太平洋海上悪天48時間予想図”であれば数値予報初期値時刻を示す。
+        TargetDateTime = self.format_datetime(soup.find("TargetDateTime").text)
+
+        # EventID 値は記述しない(空タグとする)。
+
+        # InfoType 情報形態。
+        # “発表”“訂正”“取消”のいずれかを記す。
+
+        # Serial 値は記述しない(空タグとする)。
+
+        # InfoKind スキーマの運用種別情報。
+        # “天気図情報”で固定。
+
+        # InfoKindVersion スキーマの運用種別情報のバージョン。
+        # 本解説のバージョン番号は“1.1_1”。
+
+        # Headline 見出し要素。
+        # └ Text 値は記述しない(空タグとする)。
+
+        # (3) Body 部の詳細
+        # Body 部の Item タグ1つに対して1つの天気図要素を格納する。
+        # Item 以下は、ここでは概要のみとし、詳細は(4)内容部詳細で示す。
+
+        # MeteorologicalInfos 高低気圧や前線等の“天気図情報”と“悪天情報”は、異なる MeteorologicalInfos で示す。
+        MeteorologicalInfos = soup.find("MeteorologicalInfos")
+
+        # └@type “天気図情報”または“悪天情報”と記す。
+        MeteorologicalInfos_type = MeteorologicalInfos.get("type")
+
+        # └ MeteorologicalInfo
+        MeteorologicalInfo = MeteorologicalInfos.find("MeteorologicalInfo")
+
+        #     └ DateTime 天気図の対象となる時刻を、“2011-12-18T12:00:00+09:00”のように日本標準時で記す。
+        DateTime = self.format_datetime(MeteorologicalInfo.find("DateTime").text)
+        #         例えば type が“予想 24時間後”の場合は数値予報初期時刻から24時間後の時刻を示す。
+
+        #         └@type “実況”“予想 24時間後”“予想 48時間後”のいずれかを記す。
+        DateTime_type = MeteorologicalInfo.find("DateTime").get("type")
+
+        # └ Item このタグ1つに対して1つの天気図要素または悪天情報要素を格納する。詳細は、(4)で示す。
+        for Item in MeteorologicalInfo.find_all("Item"):
+
+            # └ Kind
+            Kind = Item.find("Kind")
+
+            #     └ Name
+            #         MeteolorogicalInfos@type=“天気図情報”の場合は、このタグを省略する。
+            #         MeteorologicalInfos@type=“悪天情報”の場合は、悪天情報の種類“悪天情報(強風)”
+            #             “悪天情報(霧)”“悪天情報(海氷)”“悪天情報(船体着氷)”のいずれかを記す。
+            Kind_Name = Kind.find("Name")
+
+            if Kind_Name:
+                Kind_Name = Kind_Name.text
+
+            #     └ Property
+            Property = Kind.find("Property")
+
+            #         MeteolorogicalInfos@type=“天気図情報”の場合、及び、
+            #         MeteorologicalInfos@type=“悪天情報”で Item/Kind/Name=“悪天情報(強風)”の場合に出現する。
+            #         MeteorologicalInfos@type=“悪天情報”で Item/Kind/Name= “悪天情報(霧)”
+            #             “悪天情報(海氷)”“悪天情報(船体着氷)”の場合はこのタグを省略する。
+
+            #         └ Type 天気図要素名等。
+            #             “台風”“熱帯低気圧”“低気圧”“高気圧”“低圧部”“前線”等の天気図要素の種類もしくは悪天情報の“風”、
+            #             または“風”“呼称”“階級”等の要素を修飾する種別のいずれかを記す。
+            Property_type = Property.get("type")
+
+            #             └ xxxPart 要素がもつ内容。Type により、“CenterPart”“WindSpeedPart”“TyphoonNamePart”
+            #                 “ClassPart”“CoodinatePart”“IsobarPart”“WindPart”のいずれか1つを持つ。
+            xxxPart = self.parse_xxxPart(Property)
+
+            # └ Area MeteorologicalInfos@type=“悪天情報”の場合に出現し、悪天情報の対象領域を示す。
+            #     Item/Kind/Name=“悪天情報(強風)”の場合、強風を表現する対象海上地点(Name と Coordinate)を示す。
+            #     Item/Kind/Name=“悪天情報(霧)”の場合、対象多角形領域(Name と Polygon)または対象海域(Name と Code)を示す。
+            #     Item/Kind/Name=“悪天情報(海氷)”または“悪天情報(船体着氷)”の場合、対象格子(0.5 度四方の領域)(Name と Coordinate)を示す。
+            #     └@codeType Item/Kind/Name=“悪天情報(霧)”において、海域を対象とする場合に“全般海上海域名”と記す。
+
+            #     対象領域を Codeで示さない場合は省略する。
+            #     └ Name 悪天情報の対象領域名。
+            if Item.find("Area"):
+                if Item.find("Area").find("Name"):
+                    Area_Name = Item.find("Area").find("Name").text
+
+            #         Item/Kind/Name=“悪天情報(霧)”において、海域を対象とする場合は海域名(「日本海」「オホーツク海」等)を、
+            #         多角形領域を対象とする場合は“霧域”と記す。また、Item/Kind/Name=“悪天情報(強風)”においては“強風域”、
+            #         Item/Kind/Name=“悪天情報(海氷/船体着氷)”においては“海氷域/船体着氷域”と記す。
+
+            #     └ Code 悪天情報の対象領域コード。
+            #         Item/Kind/Name=“悪天情報(霧)”において、海域を対象とする場合は対応するコードを記す。
+            #         全般海上海域名“AreaMarineA”コード表が対応する。
+
+            #     └ jmx_eb:Polygon 悪天情報の対象多角形領域。
+            #         Item/Kind/Name=“悪天情報(霧)”において対象多角形領域を示す場合に、領域を囲む多角形の頂点を緯度経度で示す。
+
+            #     └ jmx_eb:Coordinate 悪天情報の対象緯度経度値を示す。Item/Kind/Name=“悪天情報(強風)”の場合は、強風を表現する対象海上地点を、
+            #         Item/Kind/Name=“悪天情報(海氷)”または“悪天情報(船体着氷)”の場合は、対象格子の北西端の位置を、緯度経度で示す。
+
         return df
 
 
