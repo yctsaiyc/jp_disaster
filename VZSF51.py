@@ -24,7 +24,6 @@ class ETL_VZSF51(ETL_jp_disaster):
         CenterPart = Property.find("CenterPart")
 
         if CenterPart:
-
             # CenterPart
             # └ jmx_eb:Coordinate 中心位置。擾乱の中心位置緯度経度を“+31.7+134.7/”等と記す。
             Coordinate = CenterPart.find("jmx_eb:Coordinate")
@@ -77,8 +76,7 @@ class ETL_VZSF51(ETL_jp_disaster):
                 # └ @unit “hPa” と記す。
 
         # 2要素が“台風”のときは、要素が持つ内容が複数あり、Kind 以下のタグが並列に存在する
-        # タグ 解説
-        #
+
         # Item 要素詳細があるだけ Item 部を繰り返す。
         # └ Kind
         # └ Property
@@ -96,80 +94,107 @@ class ETL_VZSF51(ETL_jp_disaster):
         # └ Property
         # └ Type 要素名“階級”と記す。
         # └ ClassPart 台風階級 *ClassPart の詳細を参照。
-        #
+
         # ア.WindSpeedPart の詳細
-        #
-        # タグ 解説
-        #
-        # WindSpeedPart
-        # └ jmx_eb:WindSpeed 最大風速。属性の unit が“m/s”の場合は、風速(メートル)を“18”等と記す。
-        # └ @type “最大風速” と記す。
-        # └ @unit “m/s”と記す。
-        # └ jmx_eb:WindSpeed 最大風速。属性の unit が“ノット”の場合は、風速(ノット)を“35”等と記す。
-        # └ @type “最大風速” と記す。
-        # └ @unit “ノット”と記す。
+        WindSpeedPart = Property.find("WindSpeedPart")
+
+        if WindSpeedPart:
+            # WindSpeedPart
+            # └ jmx_eb:WindSpeed 最大風速。属性の unit が“m/s”の場合は、風速(メートル)を“18”等と記す。
+            WindSpeed = WindSpeedPart.find("jmx_eb:WindSpeed")
+
+            if WindSpeed:
+                wind_speed = WindSpeed.text
+
+                # └ @type “最大風速” と記す。
+
+                # └ @unit “m/s”と記す。
+                wind_speed_unit = WindSpeed.get("unit")
+
+            # └ jmx_eb:WindSpeed 最大風速。属性の unit が“ノット”の場合は、風速(ノット)を“35”等と記す。
+            # └ @type “最大風速” と記す。
+            # └ @unit “ノット”と記す。
+
         # イ.TyphoonNamePart の詳細
-        #
-        # タグ 解説
-        # TyphoonNamePart
-        # └ Name 台風英名。“WASHI”等と記す。台風委員会が定める呼名“DAMREY”~“SAOLA”(CREX 表 B19209 に示すものと同じ。)、
-        #
-        # 域外から入る熱帯低気圧の呼称、または記述なし(空タグ)。
-        #
-        # └ NameKana 台風かな名。“ワシ”等と記す。台風委員会が定める呼名に対応したカタカナ表記“ダムレイ”~“サオラー”(CREX 表
-        #
-        # B19209 に示すものと同じ。)、域外から入る熱帯低気圧の呼称のカタカナ表記、または記述なし(空タグ)。
-        #
-        # └ Number 台風番号。西暦の下2桁と通年の台風番号の4桁で“1205”等と記す。
+        TyphoonNamePart = Property.find("TyphoonNamePart")
+
+        if TyphoonNamePart:
+            # TyphoonNamePart
+            # └ Name 台風英名。“WASHI”等と記す。台風委員会が定める呼名“DAMREY”~“SAOLA”(CREX 表 B19209 に示すものと同じ。)、
+            # 域外から入る熱帯低気圧の呼称、または記述なし(空タグ)。
+            name = TyphoonNamePart.find("Name")
+
+            if name:
+                name = name.text
+
+            # └ NameKana 台風かな名。“ワシ”等と記す。台風委員会が定める呼名に対応したカタカナ表記“ダムレイ”~“サオラー”
+            #     (CREX 表B19209 に示すものと同じ。)、域外から入る熱帯低気圧の呼称のカタカナ表記、または記述なし(空タグ)。
+
+            # └ Number 台風番号。西暦の下2桁と通年の台風番号の4桁で“1205”等と記す。
+
         # ウ. ClassPart の詳細
-        #
-        # タグ 解説
-        # ClassPart
-        # └ jmx_eb:TyphoonClass 台風階級。“台風(TS)”“台風(STS)”“台風(TY)”“ハリケーン(HR)”“発達した熱帯低気圧(Tropic
-        #
-        # al Storm)”のいずれかを記す。
-        #
-        # └ @type “熱帯擾乱種類” と記す。
-        #
+        ClassPart = Property.find("ClassPart")
+
+        if ClassPart:
+            # ClassPart
+            # └ jmx_eb:TyphoonClass 台風階級。“台風(TS)”“台風(STS)”“台風(TY)”“ハリケーン(HR)”
+            # “発達した熱帯低気圧(Tropical Storm)”のいずれかを記す。
+            typhoon_class = ClassPart.find("jmx_eb:TyphoonClass").text
+
+            # └ @type “熱帯擾乱種類” と記す。
+
         # 3要素が“等圧線”のとき
-        #
-        # タグ 解説
+
         # Item 要素詳細があるだけ Item 部を繰り返す。
         # └ Kind この天気図要素では、要素がもつ内容は1つで、IsobarPart のみ。
         # └ Property
         # └ Type 天気図要素名“等圧線”と記す。
         # └ IsobarPart 等圧線の情報 *IsobarPart の詳細を参照。
+
         # ア.IsobarPart の詳細
-        #
-        # タグ 解説
-        # IsobarPart
-        # └ jmx_eb:Pressure 等圧線の示度。等圧線がもつ値を示す。
-        # └ @type “気圧” と記す。
-        # └ @unit “hPa” と記す。
-        # └ jmx_eb:Line 等圧線が通る位置の情報。 “+41.56+163.76/+41.56+163.76/+41.57+163.76/”等として、等圧線を構成する連続点の緯
-        #
-        # 度経度を示す。
-        # └ @type “位置(度)” と記す。
-        #
+        IsobarPart = Property.find("IsobarPart")
+
+        if IsobarPart:
+            # IsobarPart
+            # └ jmx_eb:Pressure 等圧線の示度。等圧線がもつ値を示す。
+            Pressure = IsobarPart.find("Pressure")
+
+            if Pressure:
+                pressure = Pressure.text
+                # └ @type “気圧” と記す。
+                # └ @unit “hPa” と記す。
+
+            # └ jmx_eb:Line 等圧線が通る位置の情報。 “+41.56+163.76/+41.56+163.76/+41.57+163.76/”等として、
+            #     等圧線を構成する連続点の緯度経度を示す。
+            Line = IsobarPart.find("Line")
+
+            if Line:
+                line = Line.text
+
+                # └ @type “位置(度)” と記す。
+
         # 4要素が“寒冷前線”“温暖前線”“停滞前線”“閉塞前線”のとき
-        #
-        # タグ 解説
         # Item 要素詳細があるだけ Item 部を繰り返す。
         # └ Kind これらの天気図要素では、要素がもつ内容は1つで、CoordinatePart のみ。
         # └ Property
         # └ Type 天気図要素名“寒冷前線”“温暖前線”“停滞前線”“閉塞前線”のいずれかを記す。
         # └ CoordinatePart 前線の情報 *CoordinatePart の詳細を参照。
+
         # ア.CoordinatePart の詳細
-        #
-        # タグ 解説
-        # CoordinatePart
-        # └ jmx_eb:Line 前線が通る位置の情報。“+33.75+176.80/+33.80+176.91/+33.85+177.02/”等として、前線を構成する連続点の緯度経度
-        #
-        # を示す。
-        #
-        # └ @type “前線(度)” と記す。
-        # └ @condition 前線の属性情報がある場合 “発生しつつある”“解消しつつある”と記し、属性情報が無い場合は省略する。
-        #
+        CoordinatePart = Property.find("CoordinatePart")
+
+        if CoordinatePart:
+            # CoordinatePart
+            # └ jmx_eb:Line 前線が通る位置の情報。“+33.75+176.80/+33.80+176.91/+33.85+177.02/”等として、
+            #     前線を構成する連続点の緯度経度を示す。
+            Line = CoordinatePart.find("jmx_eb:Line")
+
+            if Line:
+                line = Line.text
+
+            # └ @type “前線(度)” と記す。
+            # └ @condition 前線の属性情報がある場合 “発生しつつある”“解消しつつある”と記し、属性情報が無い場合は省略する。
+
         # 5要素が“悪天情報(強風)”のとき
         #
         # タグ 解説
