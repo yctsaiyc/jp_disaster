@@ -146,9 +146,12 @@ class ETL_jp_disaster:
             latitude = self.dms_to_decimal(latitude)
             longitude = self.dms_to_decimal(longitude)
 
-        height = int(coordinate[3])
+        try:
+            height = int(coordinate[3])
+            return latitude, longitude, height
 
-        return latitude, longitude, height
+        except IndexError:
+            return latitude, longitude
 
     def add_wkt(self, longitude, latitude):
         return f"POINT({longitude} {latitude})"

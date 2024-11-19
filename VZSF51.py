@@ -9,6 +9,8 @@ import pandas as pd
 
 class ETL_VZSF51(ETL_jp_disaster):
     def parse_xxxPart(self, Property):
+        data_dict = {}
+
         # (4) 内容部詳細
         # Item 部は、天気図要素及び悪天情報の数だけ繰り返す。
 
@@ -29,7 +31,13 @@ class ETL_VZSF51(ETL_jp_disaster):
             Coordinate = CenterPart.find("jmx_eb:Coordinate")
 
             if Coordinate:
-                latitude, longitude, height = self.process_coordinate(Coordinate.text)
+                data_dict["latitude"], data_dict["longitude"] = self.process_coordinate(
+                    Coordinate.text
+                )
+
+                data_dict["wkt"] = self.add_wkt(
+                    data_dict["longitude"], data_dict["latitude"]
+                )
 
                 # └ @type “中心位置(度)” と示す。
                 # Coordinate_type = Coordinate.get("type")
@@ -41,7 +49,7 @@ class ETL_VZSF51(ETL_jp_disaster):
             Direction = CenterPart.find("jmx_eb:Direction")
 
             if Direction:
-                direction = Direction.text
+                data_dict["direction"] = Direction.text
 
                 # └ @type “移動方向” と記す。
                 # └ @unit “度(真方位)” と記す。
@@ -52,12 +60,12 @@ class ETL_VZSF51(ETL_jp_disaster):
             Speed = CenterPart.find("jmx_eb:Speed")
 
             if Speed:
-                speed = Speed.text
+                data_dict["speed"] = Speed.text
 
                 # └ @type “移動速度” と記す。
 
                 # └ @unit “km/h” と記す。
-                speed_unit = Speed.get("unit")
+                data_dict["speed_unit"] = Speed.get("unit")
 
                 # └ @description “30km/h”や“ほとんど停滞”、“ゆっくり”などと記す。地上24時間予想図などの予想図では移動速度が無いため省略する。
 
@@ -70,7 +78,7 @@ class ETL_VZSF51(ETL_jp_disaster):
             Pressure = CenterPart.find("jmx_eb:Pressure")
 
             if Pressure:
-                pressure = Pressure.text
+                data_dict["pressure"] = Pressure.text
 
                 # └ @type “中心気圧” と記す。
                 # └ @unit “hPa” と記す。
@@ -104,7 +112,7 @@ class ETL_VZSF51(ETL_jp_disaster):
             WindSpeed = WindSpeedPart.find("jmx_eb:WindSpeed")
 
             if WindSpeed:
-                wind_speed = WindSpeed.text
+                data_dict["wind_speed"] = WindSpeed.text
 
                 # └ @type “最大風速” と記す。
 
@@ -121,14 +129,14 @@ class ETL_VZSF51(ETL_jp_disaster):
         if TyphoonNamePart:
             # TyphoonNamePart
             # └ Name 台風英名。“WASHI”等と記す。台風委員会が定める呼名“DAMREY”~“SAOLA”(CREX 表 B19209 に示すものと同じ。)、
-            # 域外から入る熱帯低気圧の呼称、または記述なし(空タグ)。
-            name = TyphoonNamePart.find("Name")
-
-            if name:
-                name = name.text
+            #     域外から入る熱帯低気圧の呼称、または記述なし(空タグ)。
 
             # └ NameKana 台風かな名。“ワシ”等と記す。台風委員会が定める呼名に対応したカタカナ表記“ダムレイ”~“サオラー”
             #     (CREX 表B19209 に示すものと同じ。)、域外から入る熱帯低気圧の呼称のカタカナ表記、または記述なし(空タグ)。
+            name = TyphoonNamePart.find("NameKana")
+
+            if name:
+                data_dict["typhoon_name"] = name.text
 
             # └ Number 台風番号。西暦の下2桁と通年の台風番号の4桁で“1205”等と記す。
 
@@ -139,7 +147,7 @@ class ETL_VZSF51(ETL_jp_disaster):
             # ClassPart
             # └ jmx_eb:TyphoonClass 台風階級。“台風(TS)”“台風(STS)”“台風(TY)”“ハリケーン(HR)”
             # “発達した熱帯低気圧(Tropical Storm)”のいずれかを記す。
-            typhoon_class = ClassPart.find("jmx_eb:TyphoonClass").text
+            data_dict["typhoon_class"] = ClassPart.find("jmx_eb:TyphoonClass").text
 
             # └ @type “熱帯擾乱種類” と記す。
 
@@ -160,7 +168,7 @@ class ETL_VZSF51(ETL_jp_disaster):
             Pressure = IsobarPart.find("Pressure")
 
             if Pressure:
-                pressure = Pressure.text
+                data_dict["isobar_pressure"] = Pressure.text
                 # └ @type “気圧” と記す。
                 # └ @unit “hPa” と記す。
 
@@ -169,7 +177,7 @@ class ETL_VZSF51(ETL_jp_disaster):
             Line = IsobarPart.find("Line")
 
             if Line:
-                line = Line.text
+                data_dict["isobar_line"] = Line.text
 
                 # └ @type “位置(度)” と記す。
 
@@ -190,7 +198,7 @@ class ETL_VZSF51(ETL_jp_disaster):
             Line = CoordinatePart.find("jmx_eb:Line")
 
             if Line:
-                line = Line.text
+                data_dict["coordinate_line"] = Line.text
 
             # └ @type “前線(度)” と記す。
             # └ @condition 前線の属性情報がある場合 “発生しつつある”“解消しつつある”と記し、属性情報が無い場合は省略する。
@@ -219,7 +227,8 @@ class ETL_VZSF51(ETL_jp_disaster):
             WindDegree = WindPart.find("jmx_eb:WindDegree")
 
             if WindDegree:
-                wind_degree = WindDegree.text
+                data_dict["wind_degree"] = WindDegree.text
+
                 # └ @type “風向” と記す。
                 # └ @unit “度(真方位)” と記す。
 
@@ -227,7 +236,8 @@ class ETL_VZSF51(ETL_jp_disaster):
             WindSpeed = WindPart.find("jmx_eb:WindSpeed")
 
             if WindSpeed:
-                wind_speed = WindSpeed.text
+                data_dict["wind_speed"] = WindSpeed.text
+
                 # └ @type “風速” と記す。
                 # └ @unit “ノット” と記す。
 
@@ -280,8 +290,10 @@ class ETL_VZSF51(ETL_jp_disaster):
         # 3.2.7 Body 部詳細(悪天情報(海氷/船体着氷)の例)
         # ...
 
+        return data_dict
+
     def xml_to_df(self, xml_path, soup):
-        df = pd.DataFrame()
+        df = pd.DataFrame(columns=self.columns)
 
         # 天気図情報 XML の解説
 
@@ -411,7 +423,7 @@ class ETL_VZSF51(ETL_jp_disaster):
 
             #             └ xxxPart 要素がもつ内容。Type により、“CenterPart”“WindSpeedPart”“TyphoonNamePart”
             #                 “ClassPart”“CoodinatePart”“IsobarPart”“WindPart”のいずれか1つを持つ。
-            xxxPart = self.parse_xxxPart(Property)
+            xxxPart_dict = self.parse_xxxPart(Property)
 
             # └ Area MeteorologicalInfos@type=“悪天情報”の場合に出現し、悪天情報の対象領域を示す。
             #     Item/Kind/Name=“悪天情報(強風)”の場合、強風を表現する対象海上地点(Name と Coordinate)を示す。
@@ -438,6 +450,30 @@ class ETL_VZSF51(ETL_jp_disaster):
 
             #     └ jmx_eb:Coordinate 悪天情報の対象緯度経度値を示す。Item/Kind/Name=“悪天情報(強風)”の場合は、強風を表現する対象海上地点を、
             #         Item/Kind/Name=“悪天情報(海氷)”または“悪天情報(船体着氷)”の場合は、対象格子の北西端の位置を、緯度経度で示す。
+
+            df.loc[len(df)] = [
+                Title,  # 情報名称
+                ReportDateTime,  # 発表時刻
+                TargetDateTime,  # 基点時刻
+                MeteorologicalInfos_type,  # col4
+                DateTime,  # 天気図の対象となる時刻を
+                DateTime_type,  # col6
+                Kind_Name,  # col7
+                Property_type,  # col8
+                xxxPart_dict.get("longitude"),  # 気圧中心経度
+                xxxPart_dict.get("latitude"),  # 気圧中心緯度
+                xxxPart_dict.get("direction"),  # 気圧移動方向
+                xxxPart_dict.get("speed"),  # 気圧移動速度
+                xxxPart_dict.get("speed_unit"),  # 気圧移動速度単位
+                xxxPart_dict.get("pressure"),  # 気圧中心気圧
+                xxxPart_dict.get("wind_speed"),  # 台風最大風速
+                xxxPart_dict.get("typhoon_name"),  # 台風名
+                xxxPart_dict.get("typhoon_class"),  # 台風階級
+                xxxPart_dict.get("isobar_pressure"),  # 等圧線の示度
+                xxxPart_dict.get("isobar_line"),  # 等圧線が通る位置
+                xxxPart_dict.get("coordinate_line"),  # 前線が通る位置
+                xxxPart_dict.get("wkt"),  # 気圧中心wkt
+            ]
 
         return df
 
