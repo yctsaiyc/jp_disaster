@@ -65,7 +65,8 @@ class ETL_VZSF51(ETL_jp_disaster):
                 # └ @type “移動速度” と記す。
 
                 # └ @unit “km/h” と記す。
-                data_dict["speed_unit"] = Speed.get("unit")
+                if data_dict["speed"]:
+                    data_dict["speed_unit"] = Speed.get("unit")
 
                 # └ @description “30km/h”や“ほとんど停滞”、“ゆっくり”などと記す。地上24時間予想図などの予想図では移動速度が無いため省略する。
 
@@ -177,7 +178,7 @@ class ETL_VZSF51(ETL_jp_disaster):
             Line = IsobarPart.find("Line")
 
             if Line:
-                data_dict["isobar_line"] = Line.text
+                data_dict["isobar_line"] = self.convert_to_linestring(Line.text)
 
                 # └ @type “位置(度)” と記す。
 
@@ -198,7 +199,7 @@ class ETL_VZSF51(ETL_jp_disaster):
             Line = CoordinatePart.find("jmx_eb:Line")
 
             if Line:
-                data_dict["coordinate_line"] = Line.text
+                data_dict["coordinate_line"] = self.convert_to_linestring(Line.text)
 
             # └ @type “前線(度)” と記す。
             # └ @condition 前線の属性情報がある場合 “発生しつつある”“解消しつつある”と記し、属性情報が無い場合は省略する。
@@ -419,7 +420,10 @@ class ETL_VZSF51(ETL_jp_disaster):
             #         └ Type 天気図要素名等。
             #             “台風”“熱帯低気圧”“低気圧”“高気圧”“低圧部”“前線”等の天気図要素の種類もしくは悪天情報の“風”、
             #             または“風”“呼称”“階級”等の要素を修飾する種別のいずれかを記す。
-            Property_type = Property.get("type")
+            Property_Type = Property.find("Type")
+
+            if Property_Type:
+                Property_Type = Property_Type.text
 
             #             └ xxxPart 要素がもつ内容。Type により、“CenterPart”“WindSpeedPart”“TyphoonNamePart”
             #                 “ClassPart”“CoodinatePart”“IsobarPart”“WindPart”のいずれか1つを持つ。
@@ -458,8 +462,8 @@ class ETL_VZSF51(ETL_jp_disaster):
                 MeteorologicalInfos_type,  # col4
                 DateTime,  # 天気図の対象となる時刻を
                 DateTime_type,  # col6
-                Kind_Name,  # col7
-                Property_type,  # col8
+                Kind_Name,  # 悪天情報の種類
+                Property_Type,  # 天気図要素名
                 xxxPart_dict.get("longitude"),  # 気圧中心経度
                 xxxPart_dict.get("latitude"),  # 気圧中心緯度
                 xxxPart_dict.get("direction"),  # 気圧移動方向

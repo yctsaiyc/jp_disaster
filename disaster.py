@@ -156,6 +156,22 @@ class ETL_jp_disaster:
     def add_wkt(self, longitude, latitude):
         return f"POINT({longitude} {latitude})"
 
+    def convert_to_linestring(self, coordinate):
+        coordinates = coordinate.split("/")
+
+        points = []
+
+        for coordinate in coordinates:
+            if coordinate:
+                pair = coordinate.replace("-", "+").split("+")
+                latitude = float(pair[-1])
+                longitude = float(pair[-2])
+                points.append(f"{longitude} {latitude}")
+
+        line_string = f"LINESTRING ({', '.join(points)})"
+
+        return line_string
+
 
 if __name__ == "__main__":
     xml_saver = XML_saver("disaster.json")
