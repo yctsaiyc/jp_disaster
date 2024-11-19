@@ -137,7 +137,7 @@ class ETL_jp_disaster:
         return degree + round(minutes / 60.0, 4)  # e.g. 36 + 24.38 / 60
 
     def process_coordinate(self, coordinate, format_="decimal"):
-        coordinate = coordinate.replace("/", "").replace("-", "+-").split("+")
+        coordinate = coordinate.replace("/", "").replace("-", "+").split("+")
 
         latitude = float(coordinate[1])
         longitude = float(coordinate[2])
