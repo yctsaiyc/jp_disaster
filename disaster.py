@@ -95,8 +95,10 @@ class ETL_jp_disaster:
         csv_path = os.path.join(
             self.data_dir, os.path.basename(xml_path).replace(".xml", ".csv")
         )
-        df.to_csv(csv_path, index=False, encoding="utf-8")
-        print("Saved:", csv_path)
+
+        if not df.empty:
+            df.to_csv(csv_path, index=False, encoding="utf-8")
+            print("Saved:", csv_path)
 
         # Move XML file to "converted" directory
         target_dir = os.path.join(self.data_dir, "xml", "converted")
