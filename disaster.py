@@ -174,6 +174,27 @@ class ETL_jp_disaster:
 
         return line_string
 
+    def parse_TimeDefines(self, TimeDefines):
+        DateTime_dict = {}
+        Name_dict = {}
+
+        for TimeDefine in TimeDefines.find_all("TimeDefine"):
+            timeId = TimeDefine.get("timeId")
+
+            DateTime_dict[timeId] = self.format_datetime(
+                TimeDefine.find("DateTime").text
+            )
+
+            name = TimeDefine.find("Name")
+
+            if name:
+                Name_dict[timeId] = name.text
+
+        if not Name_dict:
+            return DateTime_dict
+
+        return DateTime_dict, Name_dict
+
 
 if __name__ == "__main__":
     xml_saver = XML_saver("disaster.json")
