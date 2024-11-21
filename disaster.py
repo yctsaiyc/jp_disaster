@@ -139,10 +139,10 @@ class ETL_jp_disaster:
         return degree + round(minutes / 60.0, 4)  # e.g. 36 + 24.38 / 60
 
     def process_coordinate(self, coordinate, format_="decimal"):
-        coordinate = coordinate.replace("/", "").replace("-", "+").split("+")
+        coordinate = coordinate.replace("/", "").replace("-", "+-").split("+")
 
-        latitude = float(coordinate[1])
-        longitude = float(coordinate[2])
+        latitude = abs(float(coordinate[1]))
+        longitude = abs(float(coordinate[2]))
 
         if format_ == "dms":
             latitude = self.dms_to_decimal(latitude)
@@ -166,8 +166,8 @@ class ETL_jp_disaster:
         for coordinate in coordinates:
             if coordinate:
                 pair = coordinate.replace("-", "+").split("+")
-                latitude = float(pair[-1])
-                longitude = float(pair[-2])
+                longitude = float(pair[-1])
+                latitude = float(pair[-2])
                 points.append(f"{longitude} {latitude}")
 
         line_string = f"LINESTRING ({', '.join(points)})"
