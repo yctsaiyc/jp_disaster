@@ -109,7 +109,7 @@ class ETL_VPFW50(ETL_jp_disaster):
         #     予想気温(2内容部の個別要素の詳細※2参照)、“日別平年値”の場合は、気温の平年値(2内容部の個別要素の詳細※3参照)、
         #     “7日間平年値”の場合は、降水量の平年値階級(2内容部の個別要素の詳細※4参照)を記述する。
 
-        for MeteorologicalInfos in MeteorologicalInfos_all:
+        for MeteorologicalInfos in soup.find_all("MeteorologicalInfos"):
 
             # └ TimeSeriesInfo
             TimeSeriesInfo = MeteorologicalInfos.find("TimeSeriesInfo")
@@ -119,7 +119,7 @@ class ETL_VPFW50(ETL_jp_disaster):
 
             # └MeteorologicalInfo
             #     MeteorologicalInfos の属性 type で指定した平年値を記述する。
-            MeteorologicalInfo = TimeSeriesInfo.find("MeteorologicalInfo")
+            MeteorologicalInfo = MeteorologicalInfos.find("MeteorologicalInfo")
 
             # 2内容部の個別要素の詳細
 
@@ -196,6 +196,7 @@ class ETL_VPFW50(ETL_jp_disaster):
                         #     属性 type は“基本天気”の値をとる。
                         #     属性 refID は、予報対象日の参照番号を記述する。
                         #     TimeDefines で定義した timeId に対応する。
+                        jmx_all = Part.find_all("jmx_eb:Weather")
 
                         # └ WeatherCodePart 天気予報文に対応した天気テロップ番号を記述する。※
                         # └ jmx_eb:WeatherCode テロップ番号を記述する。
@@ -218,6 +219,7 @@ class ETL_VPFW50(ETL_jp_disaster):
                         #     TimeDefines で定義した timeId に対応する。
                         #     属性condition は予報値の状態を示し、予報対象でない場合等で予報値が存在しない場合に“値なし”と記述する。
                         #     属性 description には予報値の文字列表現が入る。
+                        jmx_all = Part.find_all("jmx_eb:ProbabilityOfPrecipitation")
 
                     # └ Kind 予報を記述する。
                     # └ Property 予報要素を記述する。
@@ -232,6 +234,7 @@ class ETL_VPFW50(ETL_jp_disaster):
                         #     属性 refID は、予報対象日の参照番号を記述する。
                         #     TimeDefinesで定義した timeId に対応する。
                         #     属性 condition は予報値の状態を示し、予報対象でない場合等で予報値が存在しない場合に“値なし”と記述する。
+                        jmx_all = Part.find_all("jmx_eb:ReliabilityClass")
 
                     # └ Area 予報対象地域を記述する。
                     # └ Name 予報対象地域(予報区)の名称を記述する。
@@ -292,6 +295,7 @@ class ETL_VPFW50(ETL_jp_disaster):
                         #     属性 condition は予報値の状態を示し、
                         #         予報対象でない場合等で予報値が存在しない場合に“値なし”と記述する。
                         #     属性 description には予報値の文字列表現が入る。
+                        jmx_all = Part.find_all("jmx_eb:Temperature")
 
                     # └ Station 予報対象地点について記述する。※
                     # └ Name 対象地点の名称を記述する。
@@ -337,8 +341,7 @@ class ETL_VPFW50(ETL_jp_disaster):
                         Part = Property.find("TemperaturePart")
 
                         # └ jmx_eb:Temperature 気温の値を記述する。
-
-                    jmx_all = Part.find("jmx_eb:Temperature")
+                        jmx_all = Part.find_all("jmx_eb:Temperature")
 
                     for jmx in jmx_all:
                         jmx_text = jmx.text
@@ -356,18 +359,22 @@ class ETL_VPFW50(ETL_jp_disaster):
 
                         #     属性 description には値の文字列表現が入る。
 
+                        df.loc[len(df)] = [
+                            ReportDateTime,  # 発表時刻
+                            TargetDateTime,  # 基点時刻
+                            DateTime,  # 予報対象日/平年値 の開始時刻
+                            Area_Name,  # 対象地域
+                            MeteorologicalInfos_type,  # 予報や平年値などの項目を属性
+                            Property_Type,  # 気象要素名
+                            jmx_type,  # 気象要素名2
+                            jmx_text,  # 気象要素名の値
+                        ]
+
                     # └ Station 対象地点を記述する。※
                     # └ Name 地点の名称を記述する。
                     # └ Code 地点のコードを記述する。
 
                     # ※対象地点は府県天気予報・府県週間天気予報_解説資料付録を参照のこと
-
-                    df.loc[len(df)] = [
-                        DateTime,  # 予報対象日/平年値 の開始時刻
-                        Property_Type,  # 気象要素名
-                        jmx_type,  # 気象要素名2
-                        jmx_text,  # 気象要素名の値
-                    ]
 
             # ※4 平年値に関する事項(7日間降水量の平年値)の詳細
 
@@ -416,58 +423,49 @@ class ETL_VPFW50(ETL_jp_disaster):
                 #                     jmx_eb:ThresholdOfAboveNormal「平年より多いとなる閾値」以下となる。
                 PrecipitationClassPart = Property.find("PrecipitationClassPart")
 
-                #                     └ jmx_eb:ThresholdOfMinimum かなり少ないときの最小値(参考値)を記述する。
-                #                         属性 type は“降水量7日間合計階級最小値”の値をとり、階級閾値の内容を示す。
-                #                         属性 unit は降水量の単位を示す。
-                #                         属性 description には値の文字列表現が入る。
-                ThresholdOfMinimum = PrecipitationClassPart.find(
-                    "jmx_eb:ThresholdOfMinimum"
-                )
+                Area_Name = Item.find("Station").find("Name").text
 
-                #                     └ jmx_eb:ThresholdOfSignificantlyBelowNormal 平年よりかなり少ないとなる閾値を記述する。
-                #                         属性 type は“降水量7日間合計階級かなり少ない”の値をとり、階級閾値の内容を示す。
-                #                         属性 unit は降水量の単位を示す。
-                #                         属性 description には値の文字列表現が入る。
-                TheresholdOfSignificantlyBelowNormal = PrecipitationClassPart.find(
-                    "jmx_eb:ThresholdOfSignificantlyBelowNormal"
-                )
+                for jmx in PrecipitationClassPart.find_all(True):
+                    #                 └ jmx_eb:ThresholdOfMinimum かなり少ないときの最小値(参考値)を記述する。
+                    #                     属性 type は“降水量7日間合計階級最小値”の値をとり、階級閾値の内容を示す。
+                    #                     属性 unit は降水量の単位を示す。
+                    #                     属性 description には値の文字列表現が入る。
+                    #                 └ jmx_eb:ThresholdOfSignificantlyBelowNormal 平年よりかなり少ないとなる閾値を記述する。
+                    #                     属性 type は“降水量7日間合計階級かなり少ない”の値をとり、階級閾値の内容を示す。
+                    #                     属性 unit は降水量の単位を示す。
+                    #                     属性 description には値の文字列表現が入る。
+                    #                 └ jmx_eb:ThresholdOfBelowNormal 平年より少ないとなる閾値を記述する。
+                    #                     属性 type は“降水量7日間合計階級少ない”の値をとり、階級閾値の内容を示す。
+                    #                     属性 unit は降水量の単位を示す。
+                    #                     属性 description には値の文字列表現が入る。
+                    #                 └ jmx_eb:ThresholdOfAboveNormal 平年より多いとなる閾値を記述する。
+                    #                     属性 type は“降水量7日間合計階級多い”の値をとり、階級閾値の内容を示す。
+                    #                     属性 unit は降水量の単位を示す。
+                    #                     属性 description には値の文字列表現が入る。
+                    #                 └ jmx_eb:ThresholdOfSignificantlyAboveNormal 平年よりかなり多いとなる閾値を記述する。
+                    #                     属性 type は“降水量7日間合計階級かなり多い” の値をとり、階級閾値の内容を示す。
+                    #                     属性 unit は降水量の単位を示す。
+                    #                     属性 description には値の文字列表現が入る。
+                    #                 └ jmx_eb:ThresholdOfMaximum かなり多いとなるときの最大値(参考値)を記述する。
+                    #                     属性 type は“降水量7日間合計階級最大値”の値をとり、階級閾値の内容を示す。
+                    #                     属性 unit は降水量の単位を示す。
+                    #                     属性 description には値の文字列表現が入る。
+                    jmx_type = jmx.get("type")
+                    jmx_text = jmx.text
 
-                #                     └ jmx_eb:ThresholdOfBelowNormal 平年より少ないとなる閾値を記述する。
-                #                         属性 type は“降水量7日間合計階級少ない”の値をとり、階級閾値の内容を示す。
-                #                         属性 unit は降水量の単位を示す。
-                #                         属性 description には値の文字列表現が入る。
-                ThresholdOfBelowNormal = PrecipitationClassPart.find(
-                    "jmx_eb:ThresholdOfBelowNormal"
-                )
-
-                #                     └ jmx_eb:ThresholdOfAboveNormal 平年より多いとなる閾値を記述する。
-                #                         属性 type は“降水量7日間合計階級多い”の値をとり、階級閾値の内容を示す。
-                #                         属性 unit は降水量の単位を示す。
-                #                         属性 description には値の文字列表現が入る。
-                TheresholdOfAboveNormal = PrecipitationClassPart.find(
-                    "jmx_eb:ThresholdOfAboveNormal"
-                )
-
-                #                     └ jmx_eb:ThresholdOfSignificantlyAboveNormal 平年よりかなり多いとなる閾値を記述する。
-                #                         属性 type は“降水量7日間合計階級かなり多い” の値をとり、階級閾値の内容を示す。
-                #                         属性 unit は降水量の単位を示す。
-                #                         属性 description には値の文字列表現が入る。
-                ThresholdOfSignificantlyAboveNormal = PrecipitationClassPart.find(
-                    "jmx_eb:ThresholdOfSignificantlyAboveNormal"
-                )
-
-                #                     └ jmx_eb:ThresholdOfMaximum かなり多いとなるときの最大値(参考値)を記述する。
-                #                         属性 type は“降水量7日間合計階級最大値”の値をとり、階級閾値の内容を示す。
-                #                         属性 unit は降水量の単位を示す。
-                #                         属性 description には値の文字列表現が入る。
-                ThresholdOfMaximum = PrecipitationClassPart.find(
-                    "jmx_eb:ThresholdOfMaximum"
-                )
+                    df.loc[len(df)] = [
+                        ReportDateTime,  # 発表時刻
+                        TargetDateTime,  # 基点時刻
+                        DateTime,  # 予報対象日/平年値 の開始時刻
+                        Area_Name,  # 対象地域
+                        MeteorologicalInfos_type,  # 予報や平年値などの項目を属性
+                        Property_Type,  # 気象要素名
+                        jmx_type,  # 気象要素名2
+                        jmx_text,  # 気象要素名の値
+                    ]
 
                 # └ Station 対象地点について記述する。※
                 #     └ Name 地点の名称を記述する。
-                Area = Item.find("Station").find("Name").text
-
                 #     └ Code 地点のコードを記述する。
 
                 # ※対象地点は府県天気予報・府県週間天気予報_解説資料付録を参照のこと
