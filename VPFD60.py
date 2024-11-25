@@ -270,6 +270,18 @@ class ETL_VPFD60(ETL_jp_disaster):
                             unit = jmx.get("unit")
                             condition = jmx.get("condition")
 
+                            df.loc[len(df)] = [
+                                ReportDateTime,  # 発表時刻
+                                TargetDateTime,  # 基点時刻
+                                DateTime,  # 基点時刻2
+                                Name,  # 基点時刻3
+                                Area_Name,  # 対象地域
+                                Property_Type,  # 気象要素名
+                                jmx_text,  # 気象要素の値
+                                unit,
+                                condition,
+                            ]
+
                     # └ Kind 個々の予報の内容
                     #     予報を記述する。
                     # └ Property 予報要素
@@ -309,6 +321,18 @@ class ETL_VPFD60(ETL_jp_disaster):
                             unit = jmx.get("unit")
                             condition = jmx.get("condition")
 
+                            df.loc[len(df)] = [
+                                ReportDateTime,  # 発表時刻
+                                TargetDateTime,  # 基点時刻
+                                DateTime,  # 基点時刻2
+                                Name,  # 基点時刻3
+                                Area_Name,  # 対象地域
+                                Property_Type,  # 気象要素名
+                                jmx_text,  # 気象要素の値
+                                unit,
+                                condition,
+                            ]
+
                     # └ Kind 個々の予報の内容
                     #     予報を記述する。
                     # └ Property 予報要素
@@ -333,6 +357,18 @@ class ETL_VPFD60(ETL_jp_disaster):
                             jmx_text = jmx.text
                             unit = jmx.get("unit")
                             condition = jmx.get("condition")
+
+                            df.loc[len(df)] = [
+                                ReportDateTime,  # 発表時刻
+                                TargetDateTime,  # 基点時刻
+                                DateTime,  # 基点時刻2
+                                Name,  # 基点時刻3
+                                Area_Name,  # 対象地域
+                                Property_Type,  # 気象要素名
+                                jmx_text,  # 気象要素の値
+                                unit,
+                                condition,
+                            ]
 
                     # └ Kind 個々の予報の内容
                     #     予報を記述する。
@@ -359,6 +395,18 @@ class ETL_VPFD60(ETL_jp_disaster):
                             jmx_text = jmx.text
                             unit = jmx.get("unit")
                             condition = jmx.get("condition")
+
+                            df.loc[len(df)] = [
+                                ReportDateTime,  # 発表時刻
+                                TargetDateTime,  # 基点時刻
+                                DateTime,  # 基点時刻2
+                                Name,  # 基点時刻3
+                                Area_Name,  # 対象地域
+                                Property_Type,  # 気象要素名
+                                jmx_text,  # 気象要素の値
+                                unit,
+                                condition,
+                            ]
 
                     # └ Area 対象地域 発表予報区を記述する。
                     # └ Name 対象地域の名称 発表予報区の名称を、"東京地方""大阪府"などと記述する。
@@ -416,6 +464,18 @@ class ETL_VPFD60(ETL_jp_disaster):
                             jmx_text = jmx.text
                             unit = jmx.get("unit")
                             condition = jmx.get("condition")
+
+                            df.loc[len(df)] = [
+                                ReportDateTime,  # 発表時刻
+                                TargetDateTime,  # 基点時刻
+                                DateTime,  # 基点時刻2
+                                Name,  # 基点時刻3
+                                Area_Name,  # 対象地域
+                                Property_Type,  # 気象要素名
+                                jmx_text,  # 気象要素の値
+                                unit,
+                                condition,
+                            ]
 
                     # └ Text 雨、雪、風(風雪)、波若しくは潮位の警報級の可能性が[高]、[中]のとき又は
                     #     condition が“値なし”のとき、警報級の可能性及び対象期間の概要を文字列で記述する。
@@ -479,18 +539,6 @@ class ETL_VPFD60(ETL_jp_disaster):
                     else:
                         print(Property_Type)
                         raise
-
-                    df.loc[len(df)] = [
-                        ReportDateTime,  # 発表時刻
-                        TargetDateTime,  # 基点時刻
-                        DateTime,  # 基点時刻2
-                        Name,  # 基点時刻3
-                        Area_Name,  # 対象地域
-                        Property_Type,  # 気象要素名
-                        jmx_text,  # 気象要素の値
-                        unit,
-                        condition,
-                    ]
 
         return df
 
