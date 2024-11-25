@@ -216,89 +216,149 @@ class ETL_VPFD60(ETL_jp_disaster):
             #             "PT6H","PT12H","PT18H","PT1D"のように記述する。
             #         └ Name 予報時間の内容
             #             予報の対象時間幅や対象日について、“21日06時から12時”、“22日00時から06時”のように記述する。
-            DateTime_dict = self.parse_TimeDefines(TimeSeriesInfo)
+            DateTime_dict, Name_dict = self.parse_TimeDefines(TimeSeriesInfo)
 
             # └ Item 1時間最大雨量、3時間最大雨量、6時間最大降雪量、最大風速、波高の最大予報と、予報区を記述する。
             #     府県予報区に含まれる発表予報区の数だけ繰り返す。
             #     ※2-1「1時間最大雨量、3時間最大雨量、6時間最大降雪量、最大風速、波高の最大の予想」の詳細を参照
-            #
+
             # ※2-1「1時間最大雨量、3時間最大雨量、6時間最大降雪量、最大風速、波高の最大の予想」の詳細
-            #
+
             # Item 予報の内容
-            # └ Kind 個々の予報の内容
-            #     予報を記述する。
-            #     └ Property 予報要素
-            #         予報要素を記述する。
-            #         └ Type 気象要素名
-            #             気象要素名を記述する。
-            #             Type の値は"1時間最大雨量”。
-            #         └ DetailForecast 詳細な予報
-            #             詳細な予報を記述する。
-            #             └ PrecipitationForecastPart 1時間最大雨量
-            #                 1時間最大雨量を記述する。
-            #                 ※2-1-1 「1時間最大雨量」の詳細を参照。
-            #                 refID は、TimeDefines で定義した timeId に対応する。
-            #
-            # └ Kind 個々の予報の内容
-            #     予報を記述する。
-            #     └ Property 予報要素
-            #         予報要素を記述する。
-            #         └ Type 気象要素名
-            #             気象要素名を記述する。
-            #             Type の値は"3時間最大雨量”。
-            #         └ DetailForecast 詳細な予報
-            #             詳細な予報を記述する。
-            #             └ PrecipitationForecastPart 3時間最大雨量
-            #                 3時間最大雨量を記述する。
-            #                 ※2-1-2 「3時間最大雨量」の詳細を参照。
-            #                 refID は、TimeDefines で定義した timeId に対応する。
-            #
-            # └ Kind 個々の予報の内容
-            #     予報を記述する。
-            #     └ Property 予報要素
-            #         予報要素を記述する。
-            #         └ Type 気象要素名
-            #             気象要素名を記述する。
-            #             Type の値は"6時間最大降雪量”。
-            #         └ DetailForecast 詳細な予報
-            #             詳細な予報を記述する。
-            #             └ SnowfallDepthForecastPart 6時間最大降雪量
-            #                 6時間最大降雪量を記述する。
-            #                 ※2-1-3 「6時間最大降雪量」の詳細を参照。
-            #                 refID は、TimeDefinesで定義した timeId に対応する。
-            #
-            # └ Kind 個々の予報の内容
-            #     予報を記述する。
-            #     └ Property 予報要素
-            #         予報要素を記述する。
-            #         └ Type 気象要素名
-            #             気象要素名を記述する。
-            #             Type の値は"最大風速”。
-            #         └ DetailForecast 詳細な予報
-            #             詳細な予報を記述する。
-            #             └ WindForecastPart 最大風速
-            #                 最大風速を記述する。
-            #                 ※2-1-4 「最大風速」の詳細を参照。
-            #                 refID は、TimeDefines で定義した timeId に対応する。
-            #
-            # └ Kind 個々の予報の内容
-            #     予報を記述する。
-            #     └ Property 予報要素
-            #         予報要素を記述する。
-            #         └ Type 気象要素名
-            #             気象要素名を記述する。
-            #             Type の値は"波”。
-            #         └ DetailForecast 詳細な予報
-            #             詳細な予報を記述する。
-            #             └ WaveHeightForecastPart 波高の最大
-            #                 波高の最大を記述する。
-            #                 発表予報区で波浪警報等の運用を行なっていない場合は、Kind 以下を省略する。
-            #                 ※2-1-5 「波高の最大」の詳細を参照。
-            #                 refID は、TimeDefines で定義した timeId に対応する。
-            #
-            # └ Area 対象地域 発表予報区を記述する。
-            # └ Name 対象地域の名称 発表予報区の名称を、"東京地方""大阪府"などと記述する。
-            # └ Code 対象地域のコード 発表予報区のコード番号を、"130010" "270000"などと記述する。
+            for Item in TimeSeriesInfo.find_all("Item"):
+
+                Area_Name = Item.find("Area").find("Name").text
+
+                # └ Kind 個々の予報の内容
+                #     予報を記述する。
+                for Kind in Item.find_all("Kind"):
+
+                    # └ Property 予報要素
+                    #     予報要素を記述する。
+                    Property = Kind.find("Property")
+
+                    #     └ Type 気象要素名
+                    #         気象要素名を記述する。
+                    #         Type の値は"1時間最大雨量”。
+                    Property_Type = Property.find("Type").text
+
+                    #     └ DetailForecast 詳細な予報
+                    #         詳細な予報を記述する。
+                    DetailForecast = Property.find("DetailForecast")
+
+                    #         └ PrecipitationForecastPart 1時間最大雨量
+                    #             1時間最大雨量を記述する。
+                    #             ※2-1-1 「1時間最大雨量」の詳細を参照。
+                    #             refID は、TimeDefines で定義した timeId に対応する。
+                    if Property_Type in ["１時間最大雨量", "３時間最大雨量"]:
+                        for PrecipitationForecastPart in DetailForecast.find_all(
+                            "PrecipitationForecastPart"
+                        ):
+                            refID = PrecipitationForecastPart.get("refID")
+                            DateTime = DateTime_dict[refID]
+                            Name = Name_dict[refID]
+                            jmx_text = PrecipitationForecastPart.find(
+                                "jmx_eb:Precipitation"
+                            ).text
+
+                    # └ Kind 個々の予報の内容
+                    #     予報を記述する。
+                    # └ Property 予報要素
+                    #     予報要素を記述する。
+                    #     └ Type 気象要素名
+                    #         気象要素名を記述する。
+                    #         Type の値は"3時間最大雨量”。
+                    #     └ DetailForecast 詳細な予報
+                    #         詳細な予報を記述する。
+                    #         └ PrecipitationForecastPart 3時間最大雨量
+                    #             3時間最大雨量を記述する。
+                    #             ※2-1-2 「3時間最大雨量」の詳細を参照。
+                    #             refID は、TimeDefines で定義した timeId に対応する。
+
+                    # └ Kind 個々の予報の内容
+                    #     予報を記述する。
+                    # └ Property 予報要素
+                    #     予報要素を記述する。
+                    #     └ Type 気象要素名
+                    #         気象要素名を記述する。
+                    #         Type の値は"6時間最大降雪量”。
+                    #     └ DetailForecast 詳細な予報
+                    #         詳細な予報を記述する。
+                    #         └ SnowfallDepthForecastPart 6時間最大降雪量
+                    #             6時間最大降雪量を記述する。
+                    #             ※2-1-3 「6時間最大降雪量」の詳細を参照。
+                    #             refID は、TimeDefinesで定義した timeId に対応する。
+                    elif Property_Type == "６時間最大降雪量":
+                        for SnowfallDepthForecastPart in DetailForecast.find_all(
+                            "SnowfallDepthForecastPart"
+                        ):
+                            refID = SnowfallDepthForecastPart.get("refID")
+                            DateTime = DateTime_dict[refID]
+                            Name = Name_dict[refID]
+                            jmx_text = SnowfallDepthForecastPart.find(
+                                "jmx_eb:SnowfallDepth"
+                            ).text
+
+                    # └ Kind 個々の予報の内容
+                    #     予報を記述する。
+                    # └ Property 予報要素
+                    #     予報要素を記述する。
+                    #     └ Type 気象要素名
+                    #         気象要素名を記述する。
+                    #         Type の値は"最大風速”。
+                    #     └ DetailForecast 詳細な予報
+                    #         詳細な予報を記述する。
+                    #         └ WindForecastPart 最大風速
+                    #             最大風速を記述する。
+                    #             ※2-1-4 「最大風速」の詳細を参照。
+                    #             refID は、TimeDefines で定義した timeId に対応する。
+                    elif Property_Type == "最大風速":
+                        for WindForecastPart in DetailForecast.find_all(
+                            "WindForecastPart"
+                        ):
+                            refID = WindForecastPart.get("refID")
+                            DateTime = DateTime_dict[refID]
+                            Name = Name_dict[refID]
+                            jmx_text = WindForecastPart.find("jmx_eb:WindSpeed").text
+
+                    # └ Kind 個々の予報の内容
+                    #     予報を記述する。
+                    # └ Property 予報要素
+                    #     予報要素を記述する。
+                    #     └ Type 気象要素名
+                    #         気象要素名を記述する。
+                    #         Type の値は"波”。
+                    #     └ DetailForecast 詳細な予報
+                    #         詳細な予報を記述する。
+                    #         └ WaveHeightForecastPart 波高の最大
+                    #             波高の最大を記述する。
+                    #             発表予報区で波浪警報等の運用を行なっていない場合は、Kind 以下を省略する。
+                    #             ※2-1-5 「波高の最大」の詳細を参照。
+                    #             refID は、TimeDefines で定義した timeId に対応する。
+                    elif Property_Type == "波":
+                        for WaveHeightForecastPart in DetailForecast.find_all(
+                            "WaveHeightForecastPart"
+                        ):
+                            refID = WaveHeightForecastPart.get("refID")
+                            DateTime = DateTime_dict[refID]
+                            Name = Name_dict[refID]
+                            jmx_text = WaveHeightForecastPart.find(
+                                "jmx_eb:WaveHeight"
+                            ).text
+
+                    # └ Area 対象地域 発表予報区を記述する。
+                    # └ Name 対象地域の名称 発表予報区の名称を、"東京地方""大阪府"などと記述する。
+                    # └ Code 対象地域のコード 発表予報区のコード番号を、"130010" "270000"などと記述する。
+
+                    df.loc[len(df)] = [
+                        ReportDateTime,  # 発表時刻
+                        TargetDateTime,  # 基点時刻
+                        DateTime,  # 基点時刻2
+                        Name,  # 基点時刻3
+                        Area_Name,  # 対象地域
+                        Property_Type,  # 気象要素名
+                        jmx_text,  # 気象要素の値
+                    ]
 
         return df
 
