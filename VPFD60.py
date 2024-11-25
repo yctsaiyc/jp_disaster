@@ -41,8 +41,12 @@ class ETL_VPFD60(ETL_jp_disaster):
         #     “○○警報級の可能性(明日まで)”(○○は府県予報区名)と記述する。
         # └ReportDateTime 発表時刻
         #     本情報の公式な発表時刻を示す。“2008-06-26T11:00:00+09:00”のように日本標準時で記述する。
+        ReportDateTime = self.format_datetime(soup.find("ReportDateTime").text)
+
         # └TargetDateTime 基点時刻
         #     本情報の対象となる時刻・時間帯の基点時刻を示す。“2008-06-28T06:00:00+09:00”のように日本標準時で記述する。
+        TargetDateTime = self.format_datetime(soup.find("TargetDateTime").text)
+
         # └TargetDuration 基点時刻からの取りうる時間
         #     本情報の対象が時間幅を持つ場合、TargetDateTime を基点とした時間の幅を示す。
         # └EventID 識別情報
@@ -58,8 +62,8 @@ class ETL_VPFD60(ETL_jp_disaster):
         #     スキーマの運用種別情報におけるバージョン番号を示す。本解説のバージョン番号は“1.2_0”。
         # └Headline 見出し要素
         #     防災気象情報事項となる見出し要素を示す。警報級の可能性(明日まで)では何も記述しない。
-        # └ Text 見出し文
-        #     警報級の可能性(明日まで)では値は記述しない。
+        #     └ Text 見出し文
+        #         警報級の可能性(明日まで)では値は記述しない。
 
         # (3) 内容部
 
@@ -67,9 +71,14 @@ class ETL_VPFD60(ETL_jp_disaster):
 
         # Body
         # └MeteorologicalInfos 予報の項目
+        MeteorologicalInfos = soup.find("MeteorologicalInfos")
+
         #     予報の項目を属性 type で指定する。属性 type は“区域予報”の値をとる。
+        MeteorologicalInfos_type = MeteorologicalInfos.get("type")
+
         # └MeteorologicalInfo 予報事項
         #     MeteorologicalInfos の属性 type で指定した予報の項目を記述する。
+
         # └ TimeSeriesInfo 時系列情報
         #     MeteorologicalInfos の属性 type で指定した予報の項目を時系列情報として記述する。
 
@@ -78,50 +87,83 @@ class ETL_VPFD60(ETL_jp_disaster):
         # ※1 24時間最大雨量、24時間最大降雪量の詳細
 
         # MeteorologicalInfo 予報事項
-        # └ DateTime 基点時間
-        #     予報期間の始めの時刻を示す。“2008-01-10T00:00:00+09:00”のように日本標準時で記述する。
-        # └ Duration 対象期間
-        #     予報期間の長さを示す。"P1D"などと記述する。
-        # └ Name 予報時間の内容
-        #     予報の対象時間幅や対象日について、"21日"のように文字列で記述する。
-        #
-        # └ Item 予報の内容
-        #     24時間最大雨量、 24時間最大降雪量と予報区を記述する。府県予報区に含まれる発表予報区の数だけ繰り返す。
-        #     ※1-1「24時間最大雨量、24時間最大降雪量」の詳細を参照
+        for MeteorologicalInfo in MeteorologicalInfos.find_all("MeteorologicalInfo"):
 
-        # ※1-1「24時間最大雨量、24時間最大降雪量の予想、警報級の可能性」の詳細
+            # └ DateTime 基点時間
+            #     予報期間の始めの時刻を示す。“2008-01-10T00:00:00+09:00”のように日本標準時で記述する。
+            DateTime = self.format_datetime(MeteorologicalInfo.find("DateTime").text)
 
-        # Item 予報の内容
-        # └ Kind 個々の予報の内容
-        #     予報を記述する
-        # └ Property 予報要素
-        #     予報要素を記述する
-        # └ Type 気象要素名
-        #     気象要素名を記述する。Type の値は"24時間最大雨量”。
-        # └ DetailForecast 詳細な予報
-        #     詳細な予報を記述する
-        # └ PrecipitationForecastPart 24時間最大雨量
-        #     24時間最大雨量を記述する。
-        #     ※1-1-1 「24時間最大雨量」の詳細を参照。
+            # └ Duration 対象期間
+            #     予報期間の長さを示す。"P1D"などと記述する。
+            # └ Name 予報時間の内容
+            #     予報の対象時間幅や対象日について、"21日"のように文字列で記述する。
+            Name = MeteorologicalInfo.find("Name").text
 
-        # └ Kind 個々の予報の内容
-        #     予報を記述する
-        # └ Property 予報要素
-        #     予報要素を記述する
-        # └ Type 気象要素名
-        #     気象要素名を記述する。Type の値は"24時間最大降雪量”。
-        # └ DetailForecast 詳細な予報
-        #     詳細な予報を記述する
-        # └ SnowfallDepthForecastPart24時間最大降雪量
-        #     24時間最大降雪量を記述する。
-        #     ※1-1-2 「24時間最大降雪量」の詳細を参照。
+            # └ Item 予報の内容
+            #     24時間最大雨量、 24時間最大降雪量と予報区を記述する。府県予報区に含まれる発表予報区の数だけ繰り返す。
+            #     ※1-1「24時間最大雨量、24時間最大降雪量」の詳細を参照
 
-        # └ Area 対象地域
-        #     発表予報区を記述する。
-        # └ Name 対象地域の名称
-        #     発表予報区の名称を、"東京地方""大阪府"などと記述する。
-        # └ Code 対象地域のコード
-        #     発表予報区のコード番号を、"130010" "270000"などと記述する。
+            # ※1-1「24時間最大雨量、24時間最大降雪量の予想、警報級の可能性」の詳細
+
+            # Item 予報の内容
+            for Item in MeteorologicalInfo.find_all("Item"):
+
+                Area_Name = Item.find("Area").find("Name").text
+
+                # └ Kind 個々の予報の内容
+                #     予報を記述する
+                for Kind in Item.find_all("Kind"):
+
+                    # └ Property 予報要素
+                    #     予報要素を記述する
+                    Property = Kind.find("Property")
+
+                    # └ Type 気象要素名
+                    #     気象要素名を記述する。Type の値は"24時間最大雨量”。
+                    Property_Type = Property.find("Type").text
+
+                    # └ DetailForecast 詳細な予報
+                    #     詳細な予報を記述する
+                    # └ PrecipitationForecastPart 24時間最大雨量
+                    #     24時間最大雨量を記述する。
+                    #     ※1-1-1 「24時間最大雨量」の詳細を参照。
+                    if Property_Type == "２４時間最大雨量":
+                        jmx_text = Property.find("jmx_eb:Precipitation").text
+
+                    # └ Kind 個々の予報の内容
+                    #     予報を記述する
+                    # └ Property 予報要素
+                    #     予報要素を記述する
+                    # └ Type 気象要素名
+                    #     気象要素名を記述する。Type の値は"24時間最大降雪量”。
+                    # └ DetailForecast 詳細な予報
+                    #     詳細な予報を記述する
+                    # └ SnowfallDepthForecastPart24時間最大降雪量
+                    #     24時間最大降雪量を記述する。
+                    #     ※1-1-2 「24時間最大降雪量」の詳細を参照。
+                    elif Property_Type == "２４時間最大降雪量":
+                        jmx_text = Property.find("jmx_eb:SnowfallDepth").text
+
+                    else:
+                        print(Property_Type)
+                        raise
+
+                    df.loc[len(df)] = [
+                        ReportDateTime,  # 発表時刻
+                        TargetDateTime,  # 基点時刻
+                        DateTime,  # 基点時刻2
+                        Name,  # 基点時刻3
+                        Area_Name,  # 対象地域
+                        Property_Type,  # 気象要素名
+                        jmx_text,  # 気象要素の値
+                    ]
+
+                # └ Area 対象地域
+                #     発表予報区を記述する。
+                # └ Name 対象地域の名称
+                #     発表予報区の名称を、"東京地方""大阪府"などと記述する。
+                # └ Code 対象地域のコード
+                #     発表予報区のコード番号を、"130010" "270000"などと記述する。
 
         return df
 
