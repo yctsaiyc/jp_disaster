@@ -128,7 +128,10 @@ class ETL_VPFD60(ETL_jp_disaster):
                     #     24時間最大雨量を記述する。
                     #     ※1-1-1 「24時間最大雨量」の詳細を参照。
                     if Property_Type == "２４時間最大雨量":
-                        jmx_text = Property.find("jmx_eb:Precipitation").text
+                        jmx = Property.find("jmx_eb:Precipitation")
+                        jmx_text = jmx.text
+                        unit = jmx.get("unit")
+                        condition = jmx.get("condition")
 
                     # └ Kind 個々の予報の内容
                     #     予報を記述する
@@ -142,7 +145,10 @@ class ETL_VPFD60(ETL_jp_disaster):
                     #     24時間最大降雪量を記述する。
                     #     ※1-1-2 「24時間最大降雪量」の詳細を参照。
                     elif Property_Type == "２４時間最大降雪量":
-                        jmx_text = Property.find("jmx_eb:SnowfallDepth").text
+                        jmx = Property.find("jmx_eb:SnowfallDepth")
+                        jmx_text = jmx.text
+                        unit = jmx.get("unit")
+                        condition = jmx.get("condition")
 
                     else:
                         print(Property_Type)
@@ -156,6 +162,8 @@ class ETL_VPFD60(ETL_jp_disaster):
                         Area_Name,  # 対象地域
                         Property_Type,  # 気象要素名
                         jmx_text,  # 気象要素の値
+                        unit,
+                        condition,
                     ]
 
                 # └ Area 対象地域
@@ -257,9 +265,10 @@ class ETL_VPFD60(ETL_jp_disaster):
                             refID = PrecipitationForecastPart.get("refID")
                             DateTime = DateTime_dict[refID]
                             Name = Name_dict[refID]
-                            jmx_text = PrecipitationForecastPart.find(
-                                "jmx_eb:Precipitation"
-                            ).text
+                            jmx = PrecipitationForecastPart.find("jmx_eb:Precipitation")
+                            jmx_text = jmx.text
+                            unit = jmx.get("unit")
+                            condition = jmx.get("condition")
 
                     # └ Kind 個々の予報の内容
                     #     予報を記述する。
@@ -295,9 +304,10 @@ class ETL_VPFD60(ETL_jp_disaster):
                             refID = SnowfallDepthForecastPart.get("refID")
                             DateTime = DateTime_dict[refID]
                             Name = Name_dict[refID]
-                            jmx_text = SnowfallDepthForecastPart.find(
-                                "jmx_eb:SnowfallDepth"
-                            ).text
+                            jmx = SnowfallDepthForecastPart.find("jmx_eb:SnowfallDepth")
+                            jmx_text = jmx.text
+                            unit = jmx.get("unit")
+                            condition = jmx.get("condition")
 
                     # └ Kind 個々の予報の内容
                     #     予報を記述する。
@@ -319,7 +329,10 @@ class ETL_VPFD60(ETL_jp_disaster):
                             refID = WindForecastPart.get("refID")
                             DateTime = DateTime_dict[refID]
                             Name = Name_dict[refID]
-                            jmx_text = WindForecastPart.find("jmx_eb:WindSpeed").text
+                            jmx = WindForecastPart.find("jmx_eb:WindSpeed")
+                            jmx_text = jmx.text
+                            unit = jmx.get("unit")
+                            condition = jmx.get("condition")
 
                     # └ Kind 個々の予報の内容
                     #     予報を記述する。
@@ -342,9 +355,10 @@ class ETL_VPFD60(ETL_jp_disaster):
                             refID = WaveHeightForecastPart.get("refID")
                             DateTime = DateTime_dict[refID]
                             Name = Name_dict[refID]
-                            jmx_text = WaveHeightForecastPart.find(
-                                "jmx_eb:WaveHeight"
-                            ).text
+                            jmx = WaveHeightForecastPart.find("jmx_eb:WaveHeight")
+                            jmx_text = jmx.text
+                            unit = jmx.get("unit")
+                            condition = jmx.get("condition")
 
                     # └ Area 対象地域 発表予報区を記述する。
                     # └ Name 対象地域の名称 発表予報区の名称を、"東京地方""大阪府"などと記述する。
@@ -358,6 +372,8 @@ class ETL_VPFD60(ETL_jp_disaster):
                         Area_Name,  # 対象地域
                         Property_Type,  # 気象要素名
                         jmx_text,  # 気象要素の値
+                        unit,
+                        condition,
                     ]
 
         return df
