@@ -10,7 +10,20 @@ import pandas as pd
 
 class ETL_VPFD60(ETL_jp_disaster):
     def xml_to_df(self, xml_path, soup):
-        df = pd.DataFrame(columns=self.columns)
+
+        tmp_columns = [
+            "発表時刻",
+            "基点時刻",
+            "基点時刻2",
+            "基点時刻3",
+            "対象地域",
+            "気象要素名",
+            "気象要素の値",
+            "unit",
+            "condition",
+        ]
+
+        df = pd.DataFrame(columns=tmp_columns)
 
         # 2 各部の構成と内容
 
@@ -154,17 +167,17 @@ class ETL_VPFD60(ETL_jp_disaster):
                         print(Property_Type)
                         raise
 
-                    ### df.loc[len(df)] = [
-                    ###     ReportDateTime,  # 発表時刻
-                    ###     TargetDateTime,  # 基点時刻
-                    ###     DateTime,  # 基点時刻2
-                    ###     Name,  # 基点時刻3
-                    ###     Area_Name,  # 対象地域
-                    ###     Property_Type,  # 気象要素名
-                    ###     jmx_text,  # 気象要素の値
-                    ###     unit,
-                    ###     condition,
-                    ### ]
+                    df.loc[len(df)] = [
+                        ReportDateTime,  # 発表時刻
+                        TargetDateTime,  # 基点時刻
+                        DateTime,  # 基点時刻2
+                        Name,  # 基点時刻3
+                        Area_Name,  # 対象地域
+                        Property_Type,  # 気象要素名
+                        jmx_text,  # 気象要素の値
+                        unit,
+                        condition,
+                    ]
 
                 # └ Area 対象地域
                 #     発表予報区を記述する。
@@ -239,11 +252,6 @@ class ETL_VPFD60(ETL_jp_disaster):
 
                 # └ Kind 個々の予報の内容
                 #     予報を記述する。
-                Kind_dict = {}
-
-                for refID in DateTime_dict.keys():
-                    Kind_dict[refID] = {}
-
                 for Kind in Item.find_all("Kind"):
 
                     # └ Property 予報要素
@@ -268,9 +276,24 @@ class ETL_VPFD60(ETL_jp_disaster):
                             "PrecipitationForecastPart"
                         ):
                             refID = PrecipitationForecastPart.get("refID")
+                            DateTime = DateTime_dict[refID]
+                            Name = Name_dict[refID]
                             jmx = PrecipitationForecastPart.find("jmx_eb:Precipitation")
                             jmx_text = jmx.text
-                            Kind_dict[refID][Property_Type] = jmx_text
+                            unit = jmx.get("unit")
+                            condition = jmx.get("condition")
+
+                            df.loc[len(df)] = [
+                                ReportDateTime,  # 発表時刻
+                                TargetDateTime,  # 基点時刻
+                                DateTime,  # 基点時刻2
+                                Name,  # 基点時刻3
+                                Area_Name,  # 対象地域
+                                Property_Type,  # 気象要素名
+                                jmx_text,  # 気象要素の値
+                                unit,
+                                condition,
+                            ]
 
                     # └ Kind 個々の予報の内容
                     #     予報を記述する。
@@ -304,9 +327,24 @@ class ETL_VPFD60(ETL_jp_disaster):
                             "SnowfallDepthForecastPart"
                         ):
                             refID = SnowfallDepthForecastPart.get("refID")
+                            DateTime = DateTime_dict[refID]
+                            Name = Name_dict[refID]
                             jmx = SnowfallDepthForecastPart.find("jmx_eb:SnowfallDepth")
                             jmx_text = jmx.text
-                            Kind_dict[refID][Property_Type] = jmx_text
+                            unit = jmx.get("unit")
+                            condition = jmx.get("condition")
+
+                            df.loc[len(df)] = [
+                                ReportDateTime,  # 発表時刻
+                                TargetDateTime,  # 基点時刻
+                                DateTime,  # 基点時刻2
+                                Name,  # 基点時刻3
+                                Area_Name,  # 対象地域
+                                Property_Type,  # 気象要素名
+                                jmx_text,  # 気象要素の値
+                                unit,
+                                condition,
+                            ]
 
                     # └ Kind 個々の予報の内容
                     #     予報を記述する。
@@ -326,9 +364,24 @@ class ETL_VPFD60(ETL_jp_disaster):
                             "WindForecastPart"
                         ):
                             refID = WindForecastPart.get("refID")
+                            DateTime = DateTime_dict[refID]
+                            Name = Name_dict[refID]
                             jmx = WindForecastPart.find("jmx_eb:WindSpeed")
                             jmx_text = jmx.text
-                            Kind_dict[refID][Property_Type] = jmx_text
+                            unit = jmx.get("unit")
+                            condition = jmx.get("condition")
+
+                            df.loc[len(df)] = [
+                                ReportDateTime,  # 発表時刻
+                                TargetDateTime,  # 基点時刻
+                                DateTime,  # 基点時刻2
+                                Name,  # 基点時刻3
+                                Area_Name,  # 対象地域
+                                Property_Type,  # 気象要素名
+                                jmx_text,  # 気象要素の値
+                                unit,
+                                condition,
+                            ]
 
                     # └ Kind 個々の予報の内容
                     #     予報を記述する。
@@ -349,9 +402,24 @@ class ETL_VPFD60(ETL_jp_disaster):
                             "WaveHeightForecastPart"
                         ):
                             refID = WaveHeightForecastPart.get("refID")
+                            DateTime = DateTime_dict[refID]
+                            Name = Name_dict[refID]
                             jmx = WaveHeightForecastPart.find("jmx_eb:WaveHeight")
                             jmx_text = jmx.text
-                            Kind_dict[refID][Property_Type] = jmx_text
+                            unit = jmx.get("unit")
+                            condition = jmx.get("condition")
+
+                            df.loc[len(df)] = [
+                                ReportDateTime,  # 発表時刻
+                                TargetDateTime,  # 基点時刻
+                                DateTime,  # 基点時刻2
+                                Name,  # 基点時刻3
+                                Area_Name,  # 対象地域
+                                Property_Type,  # 気象要素名
+                                jmx_text,  # 気象要素の値
+                                unit,
+                                condition,
+                            ]
 
                     # └ Area 対象地域 発表予報区を記述する。
                     # └ Name 対象地域の名称 発表予報区の名称を、"東京地方""大阪府"などと記述する。
@@ -403,8 +471,24 @@ class ETL_VPFD60(ETL_jp_disaster):
                         ):
 
                             refID = jmx.get("refID")
+                            DateTime = DateTime_dict[refID]
+                            Name = Name_dict[refID]
+
                             jmx_text = jmx.text
-                            Kind_dict[refID][Property_Type] = jmx_text
+                            unit = jmx.get("unit")
+                            condition = jmx.get("condition")
+
+                            df.loc[len(df)] = [
+                                ReportDateTime,  # 発表時刻
+                                TargetDateTime,  # 基点時刻
+                                DateTime,  # 基点時刻2
+                                Name,  # 基点時刻3
+                                Area_Name,  # 対象地域
+                                Property_Type,  # 気象要素名
+                                jmx_text,  # 気象要素の値
+                                unit,
+                                condition,
+                            ]
 
                     # └ Text 雨、雪、風(風雪)、波若しくは潮位の警報級の可能性が[高]、[中]のとき又は
                     #     condition が“値なし”のとき、警報級の可能性及び対象期間の概要を文字列で記述する。
@@ -469,27 +553,16 @@ class ETL_VPFD60(ETL_jp_disaster):
                         print(Property_Type)
                         raise
 
-            for refID in Kind_dict.keys():
-                Kind_dict[refID]["DateTime"] = DateTime_dict[refID]
-                Kind_dict[refID]["Name"] = Name_dict[refID]
+        df.to_csv("kind.csv", index=False, encoding="utf-8")
 
-                df.loc[len(df)] = [
-                    ReportDateTime,  # 発表時刻
-                    TargetDateTime,  # 基点時刻
-                    Kind_dict[refID].get("DateTime"),  # 基点時刻2
-                    Kind_dict[refID].get("Name"),  # 基点時刻3
-                    Area_Name,  # 対象地域
-                    Kind_dict[refID].get("１時間最大雨量"),
-                    Kind_dict[refID].get("３時間最大雨量"),
-                    Kind_dict[refID].get("６時間最大降雪量"),
-                    Kind_dict[refID].get("最大風速"),
-                    Kind_dict[refID].get("波"),
-                    Kind_dict[refID].get("雨の警報級の可能性"),
-                    Kind_dict[refID].get("雪の警報級の可能性"),
-                    Kind_dict[refID].get("風（風雪）の警報級の可能性"),
-                    Kind_dict[refID].get("波の警報級の可能性"),
-                    Kind_dict[refID].get("潮位の警報級の可能性"),
-                ]
+        df = df.pivot_table(
+            index=["発表時刻", "基点時刻", "基点時刻2", "対象地域"],  # 設定多重索引
+            columns="気象要素名",  # 根據 "氣象要素名" 生成新的欄位
+            values="気象要素の値",  # 取 "気象要素の値" 作為新欄位的值
+            aggfunc="first",  # 使用第一個出現的值
+        ).reset_index()
+
+        df = df.reindex(columns=self.columns)
 
         return df
 
