@@ -566,8 +566,6 @@ class ETL_VPFD60(ETL_jp_disaster):
                         print(Property_Type)
                         raise
 
-        df.to_csv("kind.csv", index=False, encoding="utf-8")
-
         df = df.pivot_table(
             index=["発表時刻", "基点時刻", "基点時刻2", "都道府県", "対象地域"],
             columns="気象要素名",
