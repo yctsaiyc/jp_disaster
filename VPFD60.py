@@ -12,6 +12,7 @@ class ETL_VPFD60(ETL_jp_disaster):
     def xml_to_df(self, xml_path, soup):
 
         tmp_columns = [
+            "標題",
             "発表時刻",
             "基点時刻",
             "基点時刻2",
@@ -52,6 +53,8 @@ class ETL_VPFD60(ETL_jp_disaster):
         # └Title 標題
         #     情報を示す標題。具体的な内容が判別できる名称であり、可視化を目的として利用する。
         #     “○○警報級の可能性(明日まで)”(○○は府県予報区名)と記述する。
+        Title = soup.find("Head").find("Title").text
+
         # └ReportDateTime 発表時刻
         #     本情報の公式な発表時刻を示す。“2008-06-26T11:00:00+09:00”のように日本標準時で記述する。
         ReportDateTime = self.format_datetime(soup.find("ReportDateTime").text)
@@ -168,6 +171,7 @@ class ETL_VPFD60(ETL_jp_disaster):
                         raise
 
                     df.loc[len(df)] = [
+                        Title,  # 標題
                         ReportDateTime,  # 発表時刻
                         TargetDateTime,  # 基点時刻
                         DateTime,  # 基点時刻2
@@ -284,6 +288,7 @@ class ETL_VPFD60(ETL_jp_disaster):
                             condition = jmx.get("condition")
 
                             df.loc[len(df)] = [
+                                Title,  # 標題
                                 ReportDateTime,  # 発表時刻
                                 TargetDateTime,  # 基点時刻
                                 DateTime,  # 基点時刻2
@@ -335,6 +340,7 @@ class ETL_VPFD60(ETL_jp_disaster):
                             condition = jmx.get("condition")
 
                             df.loc[len(df)] = [
+                                Title,  # 標題
                                 ReportDateTime,  # 発表時刻
                                 TargetDateTime,  # 基点時刻
                                 DateTime,  # 基点時刻2
@@ -372,6 +378,7 @@ class ETL_VPFD60(ETL_jp_disaster):
                             condition = jmx.get("condition")
 
                             df.loc[len(df)] = [
+                                Title,  # 標題
                                 ReportDateTime,  # 発表時刻
                                 TargetDateTime,  # 基点時刻
                                 DateTime,  # 基点時刻2
@@ -410,6 +417,7 @@ class ETL_VPFD60(ETL_jp_disaster):
                             condition = jmx.get("condition")
 
                             df.loc[len(df)] = [
+                                Title,  # 標題
                                 ReportDateTime,  # 発表時刻
                                 TargetDateTime,  # 基点時刻
                                 DateTime,  # 基点時刻2
@@ -479,6 +487,7 @@ class ETL_VPFD60(ETL_jp_disaster):
                             condition = jmx.get("condition")
 
                             df.loc[len(df)] = [
+                                Title,  # 標題
                                 ReportDateTime,  # 発表時刻
                                 TargetDateTime,  # 基点時刻
                                 DateTime,  # 基点時刻2
@@ -556,10 +565,10 @@ class ETL_VPFD60(ETL_jp_disaster):
         df.to_csv("kind.csv", index=False, encoding="utf-8")
 
         df = df.pivot_table(
-            index=["発表時刻", "基点時刻", "基点時刻2", "対象地域"],  # 設定多重索引
-            columns="気象要素名",  # 根據 "氣象要素名" 生成新的欄位
-            values="気象要素の値",  # 取 "気象要素の値" 作為新欄位的值
-            aggfunc="first",  # 使用第一個出現的值
+            index=["標題", "発表時刻", "基点時刻", "基点時刻2", "対象地域"],
+            columns="気象要素名",
+            values="気象要素の値",
+            aggfunc="first",
         ).reset_index()
 
         df = df.reindex(columns=self.columns)
