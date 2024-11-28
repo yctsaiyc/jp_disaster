@@ -3,6 +3,7 @@ import requests
 import os
 from bs4 import BeautifulSoup
 import glob
+import zipfile
 import shutil
 import re
 
@@ -100,13 +101,25 @@ class ETL_jp_disaster:
             df.to_csv(csv_path, index=False, encoding="utf-8")
             print("Saved:", csv_path)
 
-        # Move XML file to "converted" directory
+        # Compress XML file
+        zip_path = xml_path.replace(".xml", ".zip")
+
+        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+            zipf.write(xml_path, os.path.basename(xml_path))
+
+        print("Zipped:", zip_path)
+
+        # Remove XML file
+        os.remove(xml_path)
+        print("Removed:", xml_path)
+
+        # Move zip file to "converted" directory
         target_dir = os.path.join(self.data_dir, "xml", "converted")
         os.makedirs(target_dir, exist_ok=True)
-        target_path = os.path.join(target_dir, os.path.basename(xml_path))
+        target_path = os.path.join(target_dir, os.path.basename(zip_path))
 
-        shutil.move(xml_path, target_path)
-        print(f"Moved {xml_path} to {target_path}")
+        shutil.move(zip_path, target_path)
+        print(f"Moved {zip_path} to {target_path}\n")
 
     def xml_to_df(self, xml_path, soup):
         raise NotImplementedError("Subclasses must implement this method")
