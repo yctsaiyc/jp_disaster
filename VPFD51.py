@@ -1,5 +1,8 @@
 from disaster import ETL_jp_disaster
 import pandas as pd
+import json
+import os
+import shutil
 
 
 # 府県天気予報（Ｒ１）
@@ -8,6 +11,37 @@ import pandas as pd
 
 
 class ETL_VPFD51(ETL_jp_disaster):
+    def __init__(self, config_path, feed, code):
+        with open(config_path) as file:
+            self.config = json.load(file)
+
+        self.feed = feed
+        self.code = code
+        self.columns_1 = self.config["columns"][feed][f"{code}_1"]
+        self.columns_2 = self.config["columns"][feed][f"{code}_2"]
+        self.data_dir = os.path.join(self.config["data_dir"], self.feed, self.code)
+
+    def df_to_csv(self, df_tuple, xml_path):
+        for idx, df in enumerate(df_tuple):
+            csv_path = os.path.join(
+                self.data_dir,
+                str(idx + 1),
+                os.path.basename(xml_path).replace(".xml", f"_{idx+1}.csv"),
+            )
+
+            if not df.empty:
+                os.makedirs(os.path.dirname(csv_path), exist_ok=True)
+                df.to_csv(csv_path, index=False, encoding="utf-8")
+                print("Saved:", csv_path)
+
+        # Move XML file to "converted" directory
+        target_dir = os.path.join(self.data_dir, "xml", "converted")
+        os.makedirs(target_dir, exist_ok=True)
+        target_path = os.path.join(target_dir, os.path.basename(xml_path))
+
+        shutil.move(xml_path, target_path)
+        print(f"Moved {xml_path} to {target_path}")
+
     def parse_xml(self, xml, tag_name, DateTime_dict, Name_dict):
         data_dict = {}
 
@@ -93,7 +127,21 @@ class ETL_VPFD51(ETL_jp_disaster):
         return data_dict
 
     def xml_to_df(self, xml_path, soup):
-        df = pd.DataFrame(columns=self.columns)
+        tmp_columns = [
+            "情報名称",
+            "発表時刻",
+            "基点時刻",
+            "予報の項目",
+            "都道府県",
+            "対象地域",
+            "気象要素名",
+            "予報期間の始めの時刻",
+            "予報の対象日",
+            "type",
+            "value",
+        ]
+
+        df = pd.DataFrame(columns=tmp_columns)
 
         # 2 各部の構成と内容
         # (1)管理部
@@ -174,34 +222,22 @@ class ETL_VPFD51(ETL_jp_disaster):
                 # TimeSeriesInfo
                 # └ TimeDefines
                 # 予報の対象期間を示すとともに、対応する要素の timeId を記述する。
-                TimeDefines = TimeSeriesInfo.find("TimeDefines")
-
                 #     └ TimeDefine
                 #     同一 TimeSeriesInfo 内にある要素の ID(refID)に対応する ID(timeId)を記述する。
                 #     ID は 1、2 または 1~3。ID で示す、予報対象数と同数を繰り返して記述する。
-                TimeDefine_all = TimeDefines.find_all("TimeDefine")
-                DateTime_dict = {}
-                Name_dict = {}
+                #     └ DateTime
+                #     予報期間の始めの時刻を示す。“2008-01-10T05:00:00+09:00”のように日本標準時で記述する。
+                #     └ Duration
+                #     予報期間の長さを示す。“PT19H”“PT1D”など今日予報は24時までの長さ(時間)、明日予報と明後日予報は1日で記述する。
+                #     └ Name
+                #     予報の対象日を“今日”、“明日”、“明後日”のいずれかで記述する。
+                #     発表する時刻によって“今日”は “今夜”とする場合がある。また、“明後日”がないことがある。
+                result = self.parse_TimeDefines(TimeSeriesInfo)
 
-                for TimeDefine in TimeDefine_all:
-                    timeId = TimeDefine.get("timeId")
-
-                    #     └ DateTime
-                    #     予報期間の始めの時刻を示す。“2008-01-10T05:00:00+09:00”のように日本標準時で記述する。
-                    DateTime_dict[timeId] = self.format_datetime(
-                        TimeDefine.find("DateTime").text
-                    )
-
-                    #     └ Duration
-                    #     予報期間の長さを示す。“PT19H”“PT1D”など今日予報は24時までの長さ(時間)、明日予報と明後日予報は1日で記述する。
-
-                    #     └ Name
-                    #     予報の対象日を“今日”、“明日”、“明後日”のいずれかで記述する。
-                    #     発表する時刻によって“今日”は “今夜”とする場合がある。また、“明後日”がないことがある。
-                    name = TimeDefine.find("Name")
-
-                    if name:
-                        Name_dict[timeId] = name.text
+                if isinstance(result, tuple):
+                    DateTime_dict, Name_dict = result
+                else:
+                    DateTime_dict, Name_dict = result, {}
 
                 # └ Item
                 # 天気、風、波予報と、予報区を記述する。
@@ -582,7 +618,87 @@ class ETL_VPFD51(ETL_jp_disaster):
                                     row["value"],  # value
                                 ]
 
-        return df
+        # print(df)
+
+        # df = df.sort_values(by='対象地域', ascending=True)
+        for idx, row in df.iterrows():
+            if row["気象要素名"] in ["天気", "風", "波"]:
+                df.loc[idx, "気象要素名"] = row["予報の対象日"] + row["type"]
+
+            elif row["気象要素名"] == "降水確率":
+                day = row["予報期間の始めの時刻"].split(" ")[0].split("-")[-1]
+                day_target = row["基点時刻"].split(" ")[0].split("-")[-1]
+
+                if day == day_target:
+                    day = "今日"
+
+                elif day == str(int(day_target) + 1):
+                    day = "明日"
+
+                else:
+                    print(f"Unexpected day: {day}, {day_target}")
+                    raise
+
+                df.loc[idx, "気象要素名"] = day + row["予報の対象日"] + "の降水確率"
+
+            elif row["気象要素名"] in ["日中の最高気温", "最高気温", "朝の最低気温"]:
+                df.loc[idx, "気象要素名"] = (
+                    row["予報の対象日"] + "の" + row["気象要素名"][-4:]
+                )
+
+            elif "時間" in row["気象要素名"]:
+                day = row["予報期間の始めの時刻"].split(" ")[0].split("-")[-1]
+                day_target = row["基点時刻"].split(" ")[0].split("-")[-1]
+
+                if day == day_target:
+                    day = "今日"
+
+                elif day == str(int(day_target) + 1):
+                    day = "明日"
+
+                elif day == str(int(day_target) + 2):
+                    day = "明後日"
+
+                else:
+                    print(f"Unexpected day: {day}, {day_target}")
+                    raise
+
+                split = row["気象要素名"].split("時間")
+                duration = int(split[0].replace("３", "3").replace("６", "6"))
+                kind = split[-1].replace("内", "").replace("毎", "")
+                start = int(row["予報期間の始めの時刻"].split(" ")[-1].split(":")[0])
+                row["気象要素名"] = f"{day}{start}時から{start + duration}時まで{kind}"
+                row["気象要素名"] = row["気象要素名"].translate(
+                    str.maketrans("0123456789", "０１２３４５６７８９")
+                )
+
+                df.loc[idx, "気象要素名"] = row["気象要素名"]
+
+        df = df.pivot_table(
+            index=[
+                "情報名称",
+                "予報の項目",
+                "発表時刻",
+                "基点時刻",
+                "都道府県",
+                "対象地域",
+            ],
+            columns="気象要素名",
+            values="value",
+            aggfunc="first",
+        ).reset_index()
+
+        # 檢查有無未考慮到的情況
+        for col in df.columns:
+            if col not in self.columns_1 + self.columns_2:
+                print(self.columns_1 + self.columns_2)
+                print(f"Unexpected column: {col}")
+                raise
+
+        df1 = df[df["予報の項目"] == "区域予報"].reindex(columns=self.columns_1)
+        df2 = df[df["予報の項目"] == "地点予報"].reindex(columns=self.columns_2)
+
+        return df1, df2
 
 
 if __name__ == "__main__":
