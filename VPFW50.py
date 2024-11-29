@@ -147,234 +147,235 @@ class ETL_VPFW50(ETL_jp_disaster):
                 )
 
                 # └ Item 予報の内容と予報区を記述する。府県予報区に含まれる発表予報区の数だけ繰り返す。※1-1参照。
-                Item = TimeSeriesInfo.find("Item")
+                Item_all = TimeSeriesInfo.find_all("Item")
 
                 # ※1-1 区域予報(天気、降水確率の予報、信頼度)の内容
                 # Item 予報の内容
+                for Item in Item_all:
 
-                # └ Kind 個々の予報の内容
-                # └ Property 予報要素
-                # └ Type 気象要素名
-                # └ WeatherPart 天気予報文
-                # └ WeatherCodePart 天気テロップ番号
-                # └ Kind 個々の予報の内容
-                # └ Property 予報要素
-                # └ Type 気象要素名
-                # └ ProbabilityOfPrecipitationPart 降水確率予報
-                # └ Kind 個々の予報の内容
-                # └ Property 予報要素
-                # └ Type 気象要素名
-                # └ ReliabilityClassPart 信頼度
-                # └ Area 対象地域
-                # └ Name 対象地域の名称
-                try:
-                    Area_Name = Item.find("Area").find("Name").text
-
-                except AttributeError:
-                    Area_Name = Item.find("Station").find("Name").text
-
-                # └ Code 対象地域のコード
-
-                # Item
-                # └ Kind 予報を記述する。
-                Kind_all = Item.find_all("Kind")
-
-                for Kind in Kind_all:
-
-                    # └ Property 予報要素を記述する。
-                    Property = Kind.find("Property")
-
-                    #     └ Type 気象要素名を記述する。Type の値が“天気”の場合は天気予報文を記述する。
-                    Property_Type = Property.find("Type").text
-
-                    if Property_Type == "天気":
-
-                        # └ WeatherPart 天気予報文を記述する。
-                        Part = Property.find("WeatherPart")
-
-                        # └ jmx_eb:Weather 天気予報文を記述する。
-                        #     属性 type は“基本天気”の値をとる。
-                        #     属性 refID は、予報対象日の参照番号を記述する。
-                        #     TimeDefines で定義した timeId に対応する。
-                        jmx_all = Part.find_all("jmx_eb:Weather")
-
-                        # └ WeatherCodePart 天気予報文に対応した天気テロップ番号を記述する。※
-                        # └ jmx_eb:WeatherCode テロップ番号を記述する。
-                        #     属性 type は“天気予報用テロップ番号”の値をとる。
-                        #     属性refID は、予報対象日の参照番号を記述する。
-                        #     TimeDefines で定義した timeId に対応する。
-
-                    # └ Kind 予報を記述する。
-                    # └ Property 予報要素を記述する。
-                    #     └ Type 気象要素名を記述する。Type の値が“降水確率”の場合は、降水確率について記述する。
-                    elif Property_Type == "降水確率":
-
-                        # └ ProbabilityOfPrecipitationPart 降水確率予報を記述する。
-                        Part = Property.find("ProbabilityOfPrecipitationPart")
-
-                        # └jmx_eb:ProbabilityOfPrecipitation 降水確率予報を記述する。
-                        #     属性 type は“日降水確率”の値をとり、日単位(24 時間)の降水確率であることを示す。
-                        #     属性 unit は降水確率の単位を示す。
-                        #     属性 refID は、予報対象日の参照番号を記述する。
-                        #     TimeDefines で定義した timeId に対応する。
-                        #     属性condition は予報値の状態を示し、予報対象でない場合等で予報値が存在しない場合に“値なし”と記述する。
-                        #     属性 description には予報値の文字列表現が入る。
-                        jmx_all = Part.find_all("jmx_eb:ProbabilityOfPrecipitation")
-
-                    # └ Kind 予報を記述する。
-                    # └ Property 予報要素を記述する。
-                    #     └ Type 気象要素名を記述する。Type の値が“信頼度”の場合は、予報の信頼度について記述する。
-                    elif Property_Type == "信頼度":
-
-                        # └ ReliabilityClassPart 予報の信頼度を記述する。
-                        Part = Property.find("ReliabilityClassPart")
-
-                        # └ jmx_eb:ReliabilityClass 予報の信頼度を記述する。
-                        #     属性 type は“信頼度階級”の値をとり、信頼度を階級値で記述することを示す。
-                        #     属性 refID は、予報対象日の参照番号を記述する。
-                        #     TimeDefinesで定義した timeId に対応する。
-                        #     属性 condition は予報値の状態を示し、予報対象でない場合等で予報値が存在しない場合に“値なし”と記述する。
-                        jmx_all = Part.find_all("jmx_eb:ReliabilityClass")
-
-                    # └ Area 予報対象地域を記述する。
-                    # └ Name 予報対象地域(予報区)の名称を記述する。
-                    # └ Code 予報対象地域(予報区)のコードを記述する。
-
-                    # ※天気予報文と天気予報用テロップ番号の対応は、府県天気予報・府県週間天気予報_解説資料付録を参照のこと
-
-                    # ※2 予報に関する事項(気温などの地点予報)の詳細
-                    # TimeSeriesInfo 時系列情報
-                    # └ TimeDefines 時系列の時刻定義セット
-                    # └ TimeDefine 個々の時刻定義
-                    # └ DateTime 基点時刻
-                    # └ Duration 対象期間
-                    # └ Item ※2-1 “地点予報”参照
-
-                    # TimeSeriesInfo
-                    # └ TimeDefines 予報の対象期間を示すとともに、対応する要素の timeId を記述する。
-                    # └ TimeDefine 同一 TimeSeriesInfo 内にある要素の ID(refID)に対応する ID(timeId)を記述する。
-                    # └ DateTime 予報対象日について記述する。予報対象日の開始時刻を示す。
-                    #     “2008-06-27T00:00:00+09:00”のように日本標準時で記述する。
-                    # └ Duration 予報の対象期間を示す。値「P1D」で、1日を対象とした予報であることを示す。
-                    #     DateTimeと Duration の組み合わせにより TimeDefine の示す期間は、
-                    #     文章形式では DateTime 値の日単位の期間を示す。
-                    # └ Item 予報の内容と予報地点を記述する。府県予報区に含まれる発表予報地点の数だけ繰り返す。※2-1参照。
-
-                    # ※2-1 地点予報(気温の予報)の内容
-                    # Item 予報の内容
                     # └ Kind 個々の予報の内容
                     # └ Property 予報要素
                     # └ Type 気象要素名
-                    # └ TemperaturePart 気温
-                    # └ Station 発表予想地点
-                    # └ Name 発表予想地点の名称
-                    # └ Code 発表予想地点のコード
-
-                    # Item
-                    # └ Kind 予報を記述する。
-                    # └ Property 予報要素を記述する。
-                    #     └ Type 気象要素名を記述する
-                    #         TemperaturePart に記述する予想気温の内容を示し“最低気温”、“最低気温予測範囲”、
-                    #         “最高気温”、“最高気温予測範囲”の値をとる。
-                    elif Property_Type in [
-                        "最低気温",
-                        "最低気温予測範囲",
-                        "最高気温",
-                        "最高気温予測範囲",
-                    ]:
-
-                        # └ TemperaturePart 気温に関して記述する。
-                        Part = Item.find("TemperaturePart")
-
-                        # └ jmx_eb:Temperature 予想気温を記述する。
-                        #     属性 type は“最低気温”、“最低気温予測範囲(上端)”、“最低気温予測範囲(下端)”、“最高気温”、
-                        #         “最高気温予測範囲(上端)”、“最高気温予測範囲(下端)”の値をとり、予想気温の内容を示す。
-                        #     属性 unit は気温の単位を示す。
-                        #     属性 refID は、予報対象日の参照番号を記述する。
-                        #     TimeDefines で定義した timeId に対応する。
-                        #     属性 condition は予報値の状態を示し、
-                        #         予報対象でない場合等で予報値が存在しない場合に“値なし”と記述する。
-                        #     属性 description には予報値の文字列表現が入る。
-                        jmx_all = Part.find_all("jmx_eb:Temperature")
-
-                    # └ Station 予報対象地点について記述する。※
-                    # └ Name 対象地点の名称を記述する。
-                    # └ Code 対象地点のコードを記述する。
-                    # ※対象地点は府県天気予報・府県週間天気予報_解説資料付録を参照のこと
-
-                    # ※3 平年値に関する事項(気温の日別平年値)の詳細
-                    # TimeSeriesInfo 時系列情報
-                    # └ TimeDefines 時系列の時刻定義セット
-                    # └ TimeDefine 個々の時刻定義
-                    # └ DateTime 基点時刻
-                    # └ Duration 対象期間
-                    # └ Item ※3-1 気温の日別平年値を参照
-
-                    # TimeSeriesInfo
-                    # └ TimeDefines 記述する平年値の期間を示すとともに、対応する要素の timeId を記述する。
-                    # └ TimeDefine 同一 TimeSeriesInfo 内にある要素の ID(refID)に対応する ID(timeId)を記述する。
-                    # └ DateTime 平年値の日付について記述する。掲載した平年値の開始時刻(日付)を示す。
-                    #     “2008-06-27T00:00:00+09:00”のように日本標準時で記述する。
-                    # └ Duration 予報の対象期間を示す。値「P1D」で、日別の平年値であることを示す。
-                    #     DateTime と Durationの組み合わせによりTimeDefineの示す期間は、
-                    #     文章形式ではDateTime値の日単位の期間を示す。
-                    # └ Item 平年値の内容と掲載地点を記述する。掲載地点の数だけ繰り返す。※3-1を参照。
-
-                    # ※3-1 気温の日別平年値の内容
-                    # Item 予報の内容
+                    # └ WeatherPart 天気予報文
+                    # └ WeatherCodePart 天気テロップ番号
                     # └ Kind 個々の予報の内容
                     # └ Property 予報要素
                     # └ Type 気象要素名
-                    # └ TemperaturePart 気温
-                    # └ Station 発表予想地点
-                    # └ Name 発表予想地点の名称
-                    # └ Code 発表予想地点のコード
+                    # └ ProbabilityOfPrecipitationPart 降水確率予報
+                    # └ Kind 個々の予報の内容
+                    # └ Property 予報要素
+                    # └ Type 気象要素名
+                    # └ ReliabilityClassPart 信頼度
+                    # └ Area 対象地域
+                    # └ Name 対象地域の名称
+                    try:
+                        Area_Name = Item.find("Area").find("Name").text
+
+                    except AttributeError:
+                        Area_Name = Item.find("Station").find("Name").text
+
+                    # └ Code 対象地域のコード
 
                     # Item
                     # └ Kind 予報を記述する。
-                    # └ Property 予報要素を記述する。
-                    # └ Type 気象要素名を記述する。
-                    #     TemperaturePart に記述する予想気温の内容を示し“最低気温平年値”、“最高気温平年値”の値をとる。
-                    elif Property_Type in ["最低気温平年値", "最高気温平年値"]:
+                    Kind_all = Item.find_all("Kind")
 
-                        # └ TemperaturePart 気温に関して記述する。
-                        Part = Property.find("TemperaturePart")
+                    for Kind in Kind_all:
 
-                        # └ jmx_eb:Temperature 気温の値を記述する。
-                        jmx_all = Part.find_all("jmx_eb:Temperature")
+                        # └ Property 予報要素を記述する。
+                        Property = Kind.find("Property")
 
-                    for jmx in jmx_all:
-                        jmx_text = jmx.text
+                        #     └ Type 気象要素名を記述する。Type の値が“天気”の場合は天気予報文を記述する。
+                        Property_Type = Property.find("Type").text
 
-                        #     属性 type は、“最低気温平年値”、“最高気温平年値”の値をとり、気温の内容を示す。
-                        jmx_type = jmx.get("type")
+                        if Property_Type == "天気":
 
-                        #     属性 unit は気温の単位を示す。
+                            # └ WeatherPart 天気予報文を記述する。
+                            Part = Property.find("WeatherPart")
 
-                        #     属性 refID は、対象日の参照番号を記述する。
-                        refID = jmx.get("refID")
+                            # └ jmx_eb:Weather 天気予報文を記述する。
+                            #     属性 type は“基本天気”の値をとる。
+                            #     属性 refID は、予報対象日の参照番号を記述する。
+                            #     TimeDefines で定義した timeId に対応する。
+                            jmx_all = Part.find_all("jmx_eb:Weather")
 
-                        #     TimeDefines で定義した timeId に対応する。
-                        DateTime = DateTime_dict[refID]
+                            # └ WeatherCodePart 天気予報文に対応した天気テロップ番号を記述する。※
+                            # └ jmx_eb:WeatherCode テロップ番号を記述する。
+                            #     属性 type は“天気予報用テロップ番号”の値をとる。
+                            #     属性refID は、予報対象日の参照番号を記述する。
+                            #     TimeDefines で定義した timeId に対応する。
 
-                        #     属性 description には値の文字列表現が入る。
+                        # └ Kind 予報を記述する。
+                        # └ Property 予報要素を記述する。
+                        #     └ Type 気象要素名を記述する。Type の値が“降水確率”の場合は、降水確率について記述する。
+                        elif Property_Type == "降水確率":
 
-                        df.loc[len(df)] = [
-                            ReportDateTime,  # 発表時刻
-                            TargetDateTime,  # 基点時刻
-                            DateTime,  # 予報対象日/平年値 の開始時刻
-                            Area_Name,  # 対象地域
-                            MeteorologicalInfos_type,  # 予報や平年値などの項目を属性
-                            Property_Type,  # 気象要素名
-                            jmx_type,  # 気象要素名2
-                            jmx_text,  # 気象要素名の値
-                        ]
+                            # └ ProbabilityOfPrecipitationPart 降水確率予報を記述する。
+                            Part = Property.find("ProbabilityOfPrecipitationPart")
 
-                    # └ Station 対象地点を記述する。※
-                    # └ Name 地点の名称を記述する。
-                    # └ Code 地点のコードを記述する。
+                            # └jmx_eb:ProbabilityOfPrecipitation 降水確率予報を記述する。
+                            #     属性 type は“日降水確率”の値をとり、日単位(24 時間)の降水確率であることを示す。
+                            #     属性 unit は降水確率の単位を示す。
+                            #     属性 refID は、予報対象日の参照番号を記述する。
+                            #     TimeDefines で定義した timeId に対応する。
+                            #     属性condition は予報値の状態を示し、予報対象でない場合等で予報値が存在しない場合に“値なし”と記述する。
+                            #     属性 description には予報値の文字列表現が入る。
+                            jmx_all = Part.find_all("jmx_eb:ProbabilityOfPrecipitation")
 
-                    # ※対象地点は府県天気予報・府県週間天気予報_解説資料付録を参照のこと
+                        # └ Kind 予報を記述する。
+                        # └ Property 予報要素を記述する。
+                        #     └ Type 気象要素名を記述する。Type の値が“信頼度”の場合は、予報の信頼度について記述する。
+                        elif Property_Type == "信頼度":
+
+                            # └ ReliabilityClassPart 予報の信頼度を記述する。
+                            Part = Property.find("ReliabilityClassPart")
+
+                            # └ jmx_eb:ReliabilityClass 予報の信頼度を記述する。
+                            #     属性 type は“信頼度階級”の値をとり、信頼度を階級値で記述することを示す。
+                            #     属性 refID は、予報対象日の参照番号を記述する。
+                            #     TimeDefinesで定義した timeId に対応する。
+                            #     属性 condition は予報値の状態を示し、予報対象でない場合等で予報値が存在しない場合に“値なし”と記述する。
+                            jmx_all = Part.find_all("jmx_eb:ReliabilityClass")
+
+                        # └ Area 予報対象地域を記述する。
+                        # └ Name 予報対象地域(予報区)の名称を記述する。
+                        # └ Code 予報対象地域(予報区)のコードを記述する。
+
+                        # ※天気予報文と天気予報用テロップ番号の対応は、府県天気予報・府県週間天気予報_解説資料付録を参照のこと
+
+                        # ※2 予報に関する事項(気温などの地点予報)の詳細
+                        # TimeSeriesInfo 時系列情報
+                        # └ TimeDefines 時系列の時刻定義セット
+                        # └ TimeDefine 個々の時刻定義
+                        # └ DateTime 基点時刻
+                        # └ Duration 対象期間
+                        # └ Item ※2-1 “地点予報”参照
+
+                        # TimeSeriesInfo
+                        # └ TimeDefines 予報の対象期間を示すとともに、対応する要素の timeId を記述する。
+                        # └ TimeDefine 同一 TimeSeriesInfo 内にある要素の ID(refID)に対応する ID(timeId)を記述する。
+                        # └ DateTime 予報対象日について記述する。予報対象日の開始時刻を示す。
+                        #     “2008-06-27T00:00:00+09:00”のように日本標準時で記述する。
+                        # └ Duration 予報の対象期間を示す。値「P1D」で、1日を対象とした予報であることを示す。
+                        #     DateTimeと Duration の組み合わせにより TimeDefine の示す期間は、
+                        #     文章形式では DateTime 値の日単位の期間を示す。
+                        # └ Item 予報の内容と予報地点を記述する。府県予報区に含まれる発表予報地点の数だけ繰り返す。※2-1参照。
+
+                        # ※2-1 地点予報(気温の予報)の内容
+                        # Item 予報の内容
+                        # └ Kind 個々の予報の内容
+                        # └ Property 予報要素
+                        # └ Type 気象要素名
+                        # └ TemperaturePart 気温
+                        # └ Station 発表予想地点
+                        # └ Name 発表予想地点の名称
+                        # └ Code 発表予想地点のコード
+
+                        # Item
+                        # └ Kind 予報を記述する。
+                        # └ Property 予報要素を記述する。
+                        #     └ Type 気象要素名を記述する
+                        #         TemperaturePart に記述する予想気温の内容を示し“最低気温”、“最低気温予測範囲”、
+                        #         “最高気温”、“最高気温予測範囲”の値をとる。
+                        elif Property_Type in [
+                            "最低気温",
+                            "最低気温予測範囲",
+                            "最高気温",
+                            "最高気温予測範囲",
+                        ]:
+
+                            # └ TemperaturePart 気温に関して記述する。
+                            Part = Item.find("TemperaturePart")
+
+                            # └ jmx_eb:Temperature 予想気温を記述する。
+                            #     属性 type は“最低気温”、“最低気温予測範囲(上端)”、“最低気温予測範囲(下端)”、“最高気温”、
+                            #         “最高気温予測範囲(上端)”、“最高気温予測範囲(下端)”の値をとり、予想気温の内容を示す。
+                            #     属性 unit は気温の単位を示す。
+                            #     属性 refID は、予報対象日の参照番号を記述する。
+                            #     TimeDefines で定義した timeId に対応する。
+                            #     属性 condition は予報値の状態を示し、
+                            #         予報対象でない場合等で予報値が存在しない場合に“値なし”と記述する。
+                            #     属性 description には予報値の文字列表現が入る。
+                            jmx_all = Part.find_all("jmx_eb:Temperature")
+
+                        # └ Station 予報対象地点について記述する。※
+                        # └ Name 対象地点の名称を記述する。
+                        # └ Code 対象地点のコードを記述する。
+                        # ※対象地点は府県天気予報・府県週間天気予報_解説資料付録を参照のこと
+
+                        # ※3 平年値に関する事項(気温の日別平年値)の詳細
+                        # TimeSeriesInfo 時系列情報
+                        # └ TimeDefines 時系列の時刻定義セット
+                        # └ TimeDefine 個々の時刻定義
+                        # └ DateTime 基点時刻
+                        # └ Duration 対象期間
+                        # └ Item ※3-1 気温の日別平年値を参照
+
+                        # TimeSeriesInfo
+                        # └ TimeDefines 記述する平年値の期間を示すとともに、対応する要素の timeId を記述する。
+                        # └ TimeDefine 同一 TimeSeriesInfo 内にある要素の ID(refID)に対応する ID(timeId)を記述する。
+                        # └ DateTime 平年値の日付について記述する。掲載した平年値の開始時刻(日付)を示す。
+                        #     “2008-06-27T00:00:00+09:00”のように日本標準時で記述する。
+                        # └ Duration 予報の対象期間を示す。値「P1D」で、日別の平年値であることを示す。
+                        #     DateTime と Durationの組み合わせによりTimeDefineの示す期間は、
+                        #     文章形式ではDateTime値の日単位の期間を示す。
+                        # └ Item 平年値の内容と掲載地点を記述する。掲載地点の数だけ繰り返す。※3-1を参照。
+
+                        # ※3-1 気温の日別平年値の内容
+                        # Item 予報の内容
+                        # └ Kind 個々の予報の内容
+                        # └ Property 予報要素
+                        # └ Type 気象要素名
+                        # └ TemperaturePart 気温
+                        # └ Station 発表予想地点
+                        # └ Name 発表予想地点の名称
+                        # └ Code 発表予想地点のコード
+
+                        # Item
+                        # └ Kind 予報を記述する。
+                        # └ Property 予報要素を記述する。
+                        # └ Type 気象要素名を記述する。
+                        #     TemperaturePart に記述する予想気温の内容を示し“最低気温平年値”、“最高気温平年値”の値をとる。
+                        elif Property_Type in ["最低気温平年値", "最高気温平年値"]:
+
+                            # └ TemperaturePart 気温に関して記述する。
+                            Part = Property.find("TemperaturePart")
+
+                            # └ jmx_eb:Temperature 気温の値を記述する。
+                            jmx_all = Part.find_all("jmx_eb:Temperature")
+
+                        for jmx in jmx_all:
+                            jmx_text = jmx.text
+
+                            #     属性 type は、“最低気温平年値”、“最高気温平年値”の値をとり、気温の内容を示す。
+                            jmx_type = jmx.get("type")
+
+                            #     属性 unit は気温の単位を示す。
+
+                            #     属性 refID は、対象日の参照番号を記述する。
+                            refID = jmx.get("refID")
+
+                            #     TimeDefines で定義した timeId に対応する。
+                            DateTime = DateTime_dict[refID]
+
+                            #     属性 description には値の文字列表現が入る。
+
+                            df.loc[len(df)] = [
+                                ReportDateTime,  # 発表時刻
+                                TargetDateTime,  # 基点時刻
+                                DateTime,  # 予報対象日/平年値 の開始時刻
+                                Area_Name,  # 対象地域
+                                MeteorologicalInfos_type,  # 予報や平年値などの項目を属性
+                                Property_Type,  # 気象要素名
+                                jmx_type,  # 気象要素名2
+                                jmx_text,  # 気象要素の値
+                            ]
+
+                        # └ Station 対象地点を記述する。※
+                        # └ Name 地点の名称を記述する。
+                        # └ Code 地点のコードを記述する。
+
+                        # ※対象地点は府県天気予報・府県週間天気予報_解説資料付録を参照のこと
 
             # ※4 平年値に関する事項(7日間降水量の平年値)の詳細
 
@@ -405,70 +406,72 @@ class ETL_VPFW50(ETL_jp_disaster):
                 # └ PrecipitationClassPart 平年値の階級閾値
 
                 # Item
-                Item = MeteorologicalInfo.find("Item")
+                Item_all = MeteorologicalInfo.find_all("Item")
 
-                # └ Kind 予報を記述する。
-                Kind = Item.find("Kind")
+                for Item in Item_all:
 
-                #     └ Property 予報要素を記述する。
-                Property = Kind.find("Property")
+                    # └ Kind 予報を記述する。
+                    Kind = Item.find("Kind")
 
-                #         └ Type 気象要素名を記述する。
-                #             PrecipitationClassPart に記述する降水量の内容を示し“降水量7日間合計階級閾値”の値をとる。
-                Property_Type = Property.find("Type").text
+                    #     └ Property 予報要素を記述する。
+                    Property = Kind.find("Property")
 
-                #                 └ PrecipitationClassPart 降水量の平年値階級について記述する。
-                #                     例えば、「平年並」の範囲は
-                #                     jmx_eb:ThresholdOfBelowNormal「平年より少ないとなる閾値」を超え、
-                #                     jmx_eb:ThresholdOfAboveNormal「平年より多いとなる閾値」以下となる。
-                PrecipitationClassPart = Property.find("PrecipitationClassPart")
+                    #         └ Type 気象要素名を記述する。
+                    #             PrecipitationClassPart に記述する降水量の内容を示し“降水量7日間合計階級閾値”の値をとる。
+                    Property_Type = Property.find("Type").text
 
-                Area_Name = Item.find("Station").find("Name").text
+                    #                 └ PrecipitationClassPart 降水量の平年値階級について記述する。
+                    #                     例えば、「平年並」の範囲は
+                    #                     jmx_eb:ThresholdOfBelowNormal「平年より少ないとなる閾値」を超え、
+                    #                     jmx_eb:ThresholdOfAboveNormal「平年より多いとなる閾値」以下となる。
+                    PrecipitationClassPart = Property.find("PrecipitationClassPart")
 
-                for jmx in PrecipitationClassPart.find_all(True):
-                    #                 └ jmx_eb:ThresholdOfMinimum かなり少ないときの最小値(参考値)を記述する。
-                    #                     属性 type は“降水量7日間合計階級最小値”の値をとり、階級閾値の内容を示す。
-                    #                     属性 unit は降水量の単位を示す。
-                    #                     属性 description には値の文字列表現が入る。
-                    #                 └ jmx_eb:ThresholdOfSignificantlyBelowNormal 平年よりかなり少ないとなる閾値を記述する。
-                    #                     属性 type は“降水量7日間合計階級かなり少ない”の値をとり、階級閾値の内容を示す。
-                    #                     属性 unit は降水量の単位を示す。
-                    #                     属性 description には値の文字列表現が入る。
-                    #                 └ jmx_eb:ThresholdOfBelowNormal 平年より少ないとなる閾値を記述する。
-                    #                     属性 type は“降水量7日間合計階級少ない”の値をとり、階級閾値の内容を示す。
-                    #                     属性 unit は降水量の単位を示す。
-                    #                     属性 description には値の文字列表現が入る。
-                    #                 └ jmx_eb:ThresholdOfAboveNormal 平年より多いとなる閾値を記述する。
-                    #                     属性 type は“降水量7日間合計階級多い”の値をとり、階級閾値の内容を示す。
-                    #                     属性 unit は降水量の単位を示す。
-                    #                     属性 description には値の文字列表現が入る。
-                    #                 └ jmx_eb:ThresholdOfSignificantlyAboveNormal 平年よりかなり多いとなる閾値を記述する。
-                    #                     属性 type は“降水量7日間合計階級かなり多い” の値をとり、階級閾値の内容を示す。
-                    #                     属性 unit は降水量の単位を示す。
-                    #                     属性 description には値の文字列表現が入る。
-                    #                 └ jmx_eb:ThresholdOfMaximum かなり多いとなるときの最大値(参考値)を記述する。
-                    #                     属性 type は“降水量7日間合計階級最大値”の値をとり、階級閾値の内容を示す。
-                    #                     属性 unit は降水量の単位を示す。
-                    #                     属性 description には値の文字列表現が入る。
-                    jmx_type = jmx.get("type")
-                    jmx_text = jmx.text
+                    Area_Name = Item.find("Station").find("Name").text
 
-                    df.loc[len(df)] = [
-                        ReportDateTime,  # 発表時刻
-                        TargetDateTime,  # 基点時刻
-                        DateTime,  # 予報対象日/平年値 の開始時刻
-                        Area_Name,  # 対象地域
-                        MeteorologicalInfos_type,  # 予報や平年値などの項目を属性
-                        Property_Type,  # 気象要素名
-                        jmx_type,  # 気象要素名2
-                        jmx_text,  # 気象要素名の値
-                    ]
+                    for jmx in PrecipitationClassPart.find_all(True):
+                        #                 └ jmx_eb:ThresholdOfMinimum かなり少ないときの最小値(参考値)を記述する。
+                        #                     属性 type は“降水量7日間合計階級最小値”の値をとり、階級閾値の内容を示す。
+                        #                     属性 unit は降水量の単位を示す。
+                        #                     属性 description には値の文字列表現が入る。
+                        #                 └ jmx_eb:ThresholdOfSignificantlyBelowNormal 平年よりかなり少ないとなる閾値を記述する。
+                        #                     属性 type は“降水量7日間合計階級かなり少ない”の値をとり、階級閾値の内容を示す。
+                        #                     属性 unit は降水量の単位を示す。
+                        #                     属性 description には値の文字列表現が入る。
+                        #                 └ jmx_eb:ThresholdOfBelowNormal 平年より少ないとなる閾値を記述する。
+                        #                     属性 type は“降水量7日間合計階級少ない”の値をとり、階級閾値の内容を示す。
+                        #                     属性 unit は降水量の単位を示す。
+                        #                     属性 description には値の文字列表現が入る。
+                        #                 └ jmx_eb:ThresholdOfAboveNormal 平年より多いとなる閾値を記述する。
+                        #                     属性 type は“降水量7日間合計階級多い”の値をとり、階級閾値の内容を示す。
+                        #                     属性 unit は降水量の単位を示す。
+                        #                     属性 description には値の文字列表現が入る。
+                        #                 └ jmx_eb:ThresholdOfSignificantlyAboveNormal 平年よりかなり多いとなる閾値を記述する。
+                        #                     属性 type は“降水量7日間合計階級かなり多い” の値をとり、階級閾値の内容を示す。
+                        #                     属性 unit は降水量の単位を示す。
+                        #                     属性 description には値の文字列表現が入る。
+                        #                 └ jmx_eb:ThresholdOfMaximum かなり多いとなるときの最大値(参考値)を記述する。
+                        #                     属性 type は“降水量7日間合計階級最大値”の値をとり、階級閾値の内容を示す。
+                        #                     属性 unit は降水量の単位を示す。
+                        #                     属性 description には値の文字列表現が入る。
+                        jmx_type = jmx.get("type")
+                        jmx_text = jmx.text
 
-                # └ Station 対象地点について記述する。※
-                #     └ Name 地点の名称を記述する。
-                #     └ Code 地点のコードを記述する。
+                        df.loc[len(df)] = [
+                            ReportDateTime,  # 発表時刻
+                            TargetDateTime,  # 基点時刻
+                            DateTime,  # 予報対象日/平年値 の開始時刻
+                            Area_Name,  # 対象地域
+                            MeteorologicalInfos_type,  # 予報や平年値などの項目を属性
+                            Property_Type,  # 気象要素名
+                            jmx_type,  # 気象要素名2
+                            jmx_text,  # 気象要素の値
+                        ]
 
-                # ※対象地点は府県天気予報・府県週間天気予報_解説資料付録を参照のこと
+                    # └ Station 対象地点について記述する。※
+                    #     └ Name 地点の名称を記述する。
+                    #     └ Code 地点のコードを記述する。
+
+                    # ※対象地点は府県天気予報・府県週間天気予報_解説資料付録を参照のこと
 
         return df
 
