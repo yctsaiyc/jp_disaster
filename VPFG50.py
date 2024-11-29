@@ -12,6 +12,8 @@ class ETL_VPFG50(ETL_jp_disaster):
     def xml_to_df(self, xml_path, soup):
         df = pd.DataFrame(columns=self.columns)
 
+        ## 資料僅有Text故不採用
+
         return df
 
 
