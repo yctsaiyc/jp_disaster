@@ -10,7 +10,20 @@ import pandas as pd
 
 class ETL_VPFW50(ETL_jp_disaster):
     def xml_to_df(self, xml_path, soup):
-        df = pd.DataFrame(columns=self.columns)
+
+        tmp_columns = [
+            "発表時刻",
+            "基点時刻",
+            "予報対象日/平年値 の開始時刻",
+            "予報や平年値などの項目を属性",
+            "都道府県",
+            "対象地域",
+            "気象要素名",
+            "気象要素名2",
+            "気象要素の値",
+        ]
+
+        df = pd.DataFrame(columns=tmp_columns)
 
         # 2 各部の構成と内容
 
@@ -61,6 +74,9 @@ class ETL_VPFW50(ETL_jp_disaster):
 
         # Title 「標題」
         # 情報を示す標題。具体的な内容が判別できる名称であり、可視化を目的として利用する。
+        prefecture = (
+            soup.find("Head").find("Title").text.replace("府県週間天気予報", "")
+        )
 
         # ReportDateTime 「発表時刻」
         # 本情報の公式な発表時刻を示す。“2008-06-26T11:00:00+09:00”のように日本標準時で記述する。
@@ -364,8 +380,9 @@ class ETL_VPFW50(ETL_jp_disaster):
                                 ReportDateTime,  # 発表時刻
                                 TargetDateTime,  # 基点時刻
                                 DateTime,  # 予報対象日/平年値 の開始時刻
-                                Area_Name,  # 対象地域
                                 MeteorologicalInfos_type,  # 予報や平年値などの項目を属性
+                                prefecture,  # 都道府県
+                                Area_Name,  # 対象地域
                                 Property_Type,  # 気象要素名
                                 jmx_type,  # 気象要素名2
                                 jmx_text,  # 気象要素の値
@@ -460,8 +477,9 @@ class ETL_VPFW50(ETL_jp_disaster):
                             ReportDateTime,  # 発表時刻
                             TargetDateTime,  # 基点時刻
                             DateTime,  # 予報対象日/平年値 の開始時刻
-                            Area_Name,  # 対象地域
                             MeteorologicalInfos_type,  # 予報や平年値などの項目を属性
+                            prefecture,  # 都道府県
+                            Area_Name,  # 対象地域
                             Property_Type,  # 気象要素名
                             jmx_type,  # 気象要素名2
                             jmx_text,  # 気象要素の値
@@ -472,6 +490,29 @@ class ETL_VPFW50(ETL_jp_disaster):
                     #     └ Code 地点のコードを記述する。
 
                     # ※対象地点は府県天気予報・府県週間天気予報_解説資料付録を参照のこと
+
+        return df
+
+        df = df.pivot_table(
+            index=[
+                "発表時刻",
+                "基点時刻",
+                "予報対象日/平年値 の開始時刻",
+                "都道府県",
+                "対象地域",
+            ],
+            columns="気象要素名2",
+            values="気象要素の値",
+            aggfunc="first",
+        ).reset_index()
+
+        # 檢查有無未考慮到的情況
+        for col in df.columns:
+            if col not in self.columns:
+                print(f"Unexpected column: {col}")
+                raise
+
+        df = df.reindex(columns=self.columns)
 
         return df
 
