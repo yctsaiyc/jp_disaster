@@ -305,7 +305,7 @@ class ETL_VPFW50(ETL_jp_disaster):
                             ]:
 
                                 # └ TemperaturePart 気温に関して記述する。
-                                Part = Item.find("TemperaturePart")
+                                Part = Property.find("TemperaturePart")
 
                                 # └ jmx_eb:Temperature 予想気温を記述する。
                                 #     属性 type は“最低気温”、“最低気温予測範囲(上端)”、“最低気温予測範囲(下端)”、“最高気温”、
@@ -494,8 +494,6 @@ class ETL_VPFW50(ETL_jp_disaster):
                     #     └ Code 地点のコードを記述する。
 
                     # ※対象地点は府県天気予報・府県週間天気予報_解説資料付録を参照のこと
-
-        return df
 
         df = df.pivot_table(
             index=[
