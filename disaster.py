@@ -171,7 +171,7 @@ class ETL_jp_disaster:
     def add_wkt(self, longitude, latitude):
         return f"POINT({longitude} {latitude})"
 
-    def convert_to_linestring(self, coordinate):
+    def convert_to_wkt(self, coordinate, type_="LINESTRING"):
         coordinates = coordinate.split("/")
 
         points = []
@@ -183,7 +183,7 @@ class ETL_jp_disaster:
                 latitude = float(pair[-2])
                 points.append(f"{longitude} {latitude}")
 
-        line_string = f"LINESTRING ({', '.join(points)})"
+        line_string = f"{type_} ({', '.join(points)})"
 
         return line_string
 
