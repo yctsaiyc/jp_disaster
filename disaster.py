@@ -183,9 +183,13 @@ class ETL_jp_disaster:
                 latitude = float(pair[-2])
                 points.append(f"{longitude} {latitude}")
 
-        line_string = f"{type_} ({', '.join(points)})"
+        if type_ == "LINESTRING":
+            wkt = f"LINESTRING ({', '.join(points)})"
 
-        return line_string
+        elif type_ == "POLYGON":
+            wkt = f"POLYGON (({', '.join(points)}))"
+
+        return wkt
 
     def parse_TimeDefines(self, TimeDefines):
         DateTime_dict = {}

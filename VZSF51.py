@@ -104,8 +104,8 @@ class ETL_VZSF51(ETL_jp_disaster):
             ]
         )
 
-        # 悪天情報
-        df_bad = pd.DataFrame(
+        # 悪天情報（霧）
+        df_mist = pd.DataFrame(
             columns=[
                 "Title_text",
                 "ReportDateTime_text",
@@ -116,6 +116,21 @@ class ETL_VZSF51(ETL_jp_disaster):
                 "Kind_Name_text",
                 "Area_Name_text",
                 "Polygon_text",
+            ]
+        )
+
+        # 悪天情報（海冰）
+        df_sea_ice = pd.DataFrame(
+            columns=[
+                "Title_text",
+                "ReportDateTime_text",
+                "TargetDateTime_text",
+                "DateTime_text",
+                "DateTime_type",
+                "MeteorologicalInfos_type",
+                "Kind_Name_text",
+                "Area_Name_text",
+                "linestring_text",
             ]
         )
 
@@ -386,10 +401,10 @@ class ETL_VZSF51(ETL_jp_disaster):
                         if polygon:
                             polygon_text = polygon.text
                             polygon_text = self.convert_to_wkt(
-                                line.text, type_="POLYGON"
+                                polygon.text, type_="POLYGON"
                             )
 
-                            df_bad.loc[len(df_bad)] = [
+                            df_mist.loc[len(df_mist)] = [
                                 Title_text,
                                 ReportDateTime_text,
                                 TargetDateTime_text,
@@ -408,11 +423,11 @@ class ETL_VZSF51(ETL_jp_disaster):
                         coordinate = Item.find("Coordinate", {"type": "領域（度）"})
 
                         if coordinate:
-                            polygon_text = self.convert_to_wkt(
-                                line.text, type_="POLYGON"
+                            linestring_text = self.convert_to_wkt(
+                                line.text, type_="LINESTRING"
                             )
 
-                            df_bad.loc[len(df_bad)] = [
+                            df_sea_ice.loc[len(df_sea_ice)] = [
                                 Title_text,
                                 ReportDateTime_text,
                                 TargetDateTime_text,
@@ -421,7 +436,7 @@ class ETL_VZSF51(ETL_jp_disaster):
                                 MeteorologicalInfos_type,
                                 Kind_Name_text,
                                 Area_Name_text,
-                                polygon_text,
+                                linestring_text,
                             ]
 
                     else:
@@ -444,7 +459,8 @@ class ETL_VZSF51(ETL_jp_disaster):
             "isobar": df_isobar,
             "front": df_front,
             "wind": df_wind,
-            "bad": df_bad,
+            "mist": df_mist,
+            "sea_ice": df_sea_ice,
         }
 
         return df_dict
@@ -458,7 +474,7 @@ class ETL_VZSF51(ETL_jp_disaster):
             csv_path = os.path.join(
                 self.config["data_dir"],
                 self.feed,
-                key,
+                f"VZS_{key}",
                 os.path.basename(xml_path).replace(".xml", f"_{key}.csv"),
             )
 
