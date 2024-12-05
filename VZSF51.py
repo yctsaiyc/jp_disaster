@@ -16,121 +16,121 @@ class ETL_VZSF51(ETL_jp_disaster):
         # 低気圧, 高気圧, 熱帯低気圧, 低圧部
         df_pressure = pd.DataFrame(
             columns=[
-                "Title",
-                "ReportDateTime",
-                "TargetDateTime",
-                "DateTime_text",
-                "DateTime_type",
-                "MeteorologicalInfos_type",
-                "Property_Type_text",
-                "direction_text",
-                "speed_text",
-                "pressure_text",
-                "longitude",
-                "latitude",
-                "wkt",
+                "情報名称",  # "Title",
+                "発表時刻",  # "ReportDateTime",
+                "基点時刻",  # "TargetDateTime",
+                "対象時刻",  # "DateTime_text",
+                "対象時刻の種類",  # "DateTime_type",
+                "情報の種類",  # "MeteorologicalInfos_type",
+                "気象要素名",  # "Property_Type_text",
+                "移動方向（真方位）",  # "direction_text",
+                "移動速度（km/h）",  # "speed_text",
+                "中心気圧（hPa）",  # "pressure_text",
+                "中心経度",  # "longitude",
+                "中心緯度",  # "latitude",
+                "wkt",  # "wkt",
             ]
         )
 
         # 台風
         df_typhoon = pd.DataFrame(
             columns=[
-                "Title_text",
-                "ReportDateTime_text",
-                "TargetDateTime_text",
-                "DateTime_text",
-                "DateTime_type",
-                "MeteorologicalInfos_type",
-                "Property_Type_text",
-                "direction_text",
-                "speed_text",
-                "pressure_text",
-                "wind_speed_text",
-                "name_text",
-                "name_kana_text",
-                "number_text",
-                "typhoon_class_text",
-                "longitude",
-                "latitude",
-                "wkt",
+                "情報名称",  # "Title",
+                "発表時刻",  # "ReportDateTime",
+                "基点時刻",  # "TargetDateTime",
+                "対象時刻",  # "DateTime_text",
+                "対象時刻の種類",  # "DateTime_type",
+                "情報の種類",  # "MeteorologicalInfos_type",
+                "気象要素名",  # "Property_Type_text",
+                "移動方向（真方位）",  # "direction_text",
+                "移動速度（km/h）",  # "speed_text",
+                "中心気圧（hPa）",  # "pressure_text",
+                "最大風速（m/s）",  # "wind_speed_text",
+                "台風英名",  # "name_text",
+                "台風かな名",  # "name_kana_text",
+                "台風番号",  # "number_text",
+                "台風階級",  # "typhoon_class_text",
+                "中心経度",  # "longitude",
+                "中心緯度",  # "latitude",
+                "wkt",  # "wkt",
             ]
         )
 
         # 等圧線
         df_isobar = pd.DataFrame(
             columns=[
-                "Title_text",
-                "ReportDateTime_text",
-                "TargetDateTime_text",
-                "DateTime_text",
-                "DateTime_type",
-                "MeteorologicalInfos_type",
-                "Property_Type_text",
-                "pressure_text",
-                "line_text",
+                "情報名称",  # "Title",
+                "発表時刻",  # "ReportDateTime",
+                "基点時刻",  # "TargetDateTime",
+                "対象時刻",  # "DateTime_text",
+                "対象時刻の種類",  # "DateTime_type",
+                "情報の種類",  # "MeteorologicalInfos_type",
+                "気象要素名",  # "Property_Type_text",
+                "気圧（hPa）",  # "pressure_text",
+                "等圧線が通る位置",  # "line_text",
             ]
         )
 
         # 鋒面
         df_front = pd.DataFrame(
             columns=[
-                "Title_text",
-                "ReportDateTime_text",
-                "TargetDateTime_text",
-                "DateTime_text",
-                "DateTime_type",
-                "MeteorologicalInfos_type",
-                "Property_Type_text",
-                "line_text",
+                "情報名称",  # "Title",
+                "発表時刻",  # "ReportDateTime",
+                "基点時刻",  # "TargetDateTime",
+                "対象時刻",  # "DateTime_text",
+                "対象時刻の種類",  # "DateTime_type",
+                "情報の種類",  # "MeteorologicalInfos_type",
+                "気象要素名",  # "Property_Type_text",
+                "前線が通る位置",  # "line_text",
             ]
         )
 
         # 悪天情報（強風）
         df_wind = pd.DataFrame(
             columns=[
-                "Title_text",
-                "ReportDateTime_text",
-                "TargetDateTime_text",
-                "DateTime_text",
-                "DateTime_type",
-                "MeteorologicalInfos_type",
-                "Property_Type_text",
-                "Kind_Name_text",
-                "WindDegree_text",
-                "WindSpeed_text",
-                "longitude",
-                "latitude",
-                "wkt",
+                "情報名称",  # "Title",
+                "発表時刻",  # "ReportDateTime",
+                "基点時刻",  # "TargetDateTime",
+                "対象時刻",  # "DateTime_text",
+                "対象時刻の種類",  # "DateTime_type",
+                "情報の種類",  # "MeteorologicalInfos_type",
+                "気象要素名",  # "Property_Type_text",
+                "悪天情報要素名",  # "Kind_Name_text",
+                "風向（真方位）",  # "WindDegree_text",
+                "風速（ノット）",  # "WindSpeed_text",
+                "中心経度",  # "longitude",
+                "中心緯度",  # "latitude",
+                "wkt",  # "wkt",
             ]
         )
 
         # 悪天情報（霧）
         df_mist = pd.DataFrame(
             columns=[
-                "Title_text",
-                "ReportDateTime_text",
-                "TargetDateTime_text",
-                "DateTime_text",
-                "DateTime_type",
-                "MeteorologicalInfos_type",
-                "Kind_Name_text",
-                "Area_Name_text",
-                "Polygon_text",
+                "情報名称",  # "Title",
+                "発表時刻",  # "ReportDateTime",
+                "基点時刻",  # "TargetDateTime",
+                "対象時刻",  # "DateTime_text",
+                "対象時刻の種類",  # "DateTime_type",
+                "情報の種類",  # "MeteorologicalInfos_type",
+                "悪天情報要素名",  # "Kind_Name_text",
+                "対象領域",  # "Area_Name_text",
+                "対象領域を囲む多角形",  # "Polygon_text",
             ]
         )
 
         # 悪天情報（海冰）
         df_sea_ice = pd.DataFrame(
             columns=[
-                "Title_text",
-                "ReportDateTime_text",
-                "TargetDateTime_text",
-                "DateTime_text",
-                "DateTime_type",
-                "MeteorologicalInfos_type",
-                "Kind_Name_text",
-                "Area_Name_text",
-                "linestring_text",
+                "情報名称",  # "Title",
+                "発表時刻",  # "ReportDateTime",
+                "基点時刻",  # "TargetDateTime",
+                "対象時刻",  # "DateTime_text",
+                "対象時刻の種類",  # "DateTime_type",
+                "情報の種類",  # "MeteorologicalInfos_type",
+                "悪天情報要素名",  # "Kind_Name_text",
+                "対象領域",  # "Area_Name_text",
+                "対象領域端点",  # "linestring_text",
             ]
         )
 
